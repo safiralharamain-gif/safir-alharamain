@@ -1,6 +1,7 @@
 (() => {
   const DATA_URL='./data/site-content.json?v='+Date.now();
-  const ISSUE_BASE='https://github.com/safiralharamain-gif/safir-alharamain/issues/new';
+  const NEW_FILE_BASE='https://github.com/safiralharamain-gif/safir-alharamain/new/main/cms-requests';
+  const DRAFT_KEY='safirCmsDraftV2';
   let data={};
 
   const $=id=>document.getElementById(id);
@@ -27,6 +28,7 @@
   }
 
   function collect(){
+    data=data||{};
     data.brand=data.brand||{};
     data.umrahGuide={
       title:$('umrahTitle').value.trim(),
@@ -51,6 +53,25 @@
       videos:lines(el.querySelector('[data-f=videos]').value),
       visible:el.querySelector('[data-f=visible]').checked
     }));
+    return data;
+  }
+
+  function saveDraft(){
+    try{
+      collect();
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({updatedAt:Date.now(),data}));
+      setStatus('المسودة محفوظة تلقائيًا على الجهاز.');
+    }catch(e){}
+  }
+
+  function loadDraft(){
+    try{
+      const raw=localStorage.getItem(DRAFT_KEY);
+      if(!raw) return null;
+      const d=JSON.parse(raw);
+      if(!d || !d.data) return null;
+      return d.data;
+    }catch(e){return null}
   }
 
   function tripTemplate(t={},idx=0){
@@ -73,7 +94,17 @@
   function renderTrips(){
     $('tripEditors').innerHTML=(data.pastTrips||[]).map(tripTemplate).join('');
     document.querySelectorAll('[data-delete-trip]').forEach(btn=>{
-      btn.onclick=()=>btn.closest('.trip-editor').remove();
+      btn.onclick=()=>{btn.closest('.trip-editor').remove();saveDraft();};
+    });
+    bindAutosave();
+  }
+
+  function bindAutosave(){
+    document.querySelectorAll('input,textarea').forEach(el=>{
+      el.removeEventListener('input',saveDraft);
+      el.removeEventListener('change',saveDraft);
+      el.addEventListener('input',saveDraft);
+      el.addEventListener('change',saveDraft);
     });
   }
 
@@ -82,23 +113,34 @@
     data.pastTrips=data.pastTrips||[];
     data.pastTrips.push({title:'رحلة جديدة',date:'',description:'',cover:'',images:[],videos:[],visible:true});
     renderTrips();
+    saveDraft();
   }
 
-  function save(){
+  function publish(){
     collect();
+    saveDraft();
     const payload=JSON.stringify(data,null,2);
-    const body='طلب تحديث محتوى الموقع من لوحة الإدارة.\n\n\`\`\`json\n'+payload+'\n\`\`\`\n';
-    const url=ISSUE_BASE+'?title='+encodeURIComponent('[CMS] تحديث محتوى الموقع')+'&body='+encodeURIComponent(body);
-    setStatus('تم تجهيز التعديل. جارٍ فتح شاشة التأكيد في GitHub...');
+    const filename='request-'+Date.now()+'.json';
+    const url=NEW_FILE_BASE+'?filename='+encodeURIComponent(filename)+'&value='+encodeURIComponent(payload);
+    setStatus('تم حفظ المسودة. جارٍ فتح صفحة النشر الجاهزة على GitHub...');
     window.open(url,'_blank');
   }
 
+  const draft=loadDraft();
   fetch(DATA_URL,{cache:'no-store'})
     .then(r=>r.ok?r.json():Promise.reject(new Error('تعذر تحميل البيانات')))
-    .then(d=>{data=d||{};fill();setStatus('تم تحميل بيانات الموقع.');})
-    .catch(e=>setStatus(e.message));
+    .then(remote=>{
+      data=draft||remote||{};
+      fill();
+      bindAutosave();
+      setStatus(draft?'تم استرجاع المسودة المحفوظة تلقائيًا.':'تم تحميل بيانات الموقع.');
+    })
+    .catch(e=>{
+      if(draft){data=draft;fill();bindAutosave();setStatus('تم استرجاع المسودة المحفوظة تلقائيًا.');}
+      else setStatus(e.message);
+    });
 
   $('addTrip').onclick=addTrip;
-  $('saveAll').onclick=save;
-  $('saveAllBottom').onclick=save;
+  $('saveAll').onclick=publish;
+  $('saveAllBottom').onclick=publish;
 })();
