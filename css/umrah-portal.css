@@ -53,3 +53,8 @@ body{font-size:18px;background:#fff;}
   .safir-portal-nav{top:68px}
   .booking-form{padding:1.4rem!important}
 }
+
+
+.safir-video-wrap{display:flex;flex-direction:column;gap:10px}
+.safir-youtube-fallback{display:inline-flex;align-items:center;justify-content:center;font-family:'Shamel-thin';font-size:.95rem;color:var(--safir-gold-dark);padding:.45rem .8rem;border-radius:10px;background:#fff8ea;border:1px solid #ead6b2}
+.safir-youtube-fallback:hover{color:#fff;background:var(--safir-gold);border-color:var(--safir-gold)}
