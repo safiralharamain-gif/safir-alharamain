@@ -1,23 +1,44 @@
 (() => {
   const DATA_URL = './data/site-content.json?v=' + Date.now();
 
-  function youtubeId(url=''){
+  function parseYouTubeTime(value=''){
+    if(!value) return 0;
+    if(/^\d+$/.test(value)) return Number(value);
+    let total = 0;
+    const h = value.match(/(\d+)h/);
+    const m = value.match(/(\d+)m/);
+    const s = value.match(/(\d+)s/);
+    if(h) total += Number(h[1]) * 3600;
+    if(m) total += Number(m[1]) * 60;
+    if(s) total += Number(s[1]);
+    return total;
+  }
+
+  function youtubeInfo(url=''){
     try{
       const u = new URL(url);
-      if(u.hostname.includes('youtu.be')) return u.pathname.split('/').filter(Boolean)[0] || '';
-      if(u.pathname.includes('/shorts/')) return u.pathname.split('/shorts/')[1].split('/')[0];
-      if(u.pathname.includes('/embed/')) return u.pathname.split('/embed/')[1].split('/')[0];
-      return u.searchParams.get('v') || '';
+      let id = '';
+      if(u.hostname.includes('youtu.be')) id = u.pathname.split('/').filter(Boolean)[0] || '';
+      else if(u.pathname.includes('/shorts/')) id = u.pathname.split('/shorts/')[1].split('/')[0];
+      else if(u.pathname.includes('/embed/')) id = u.pathname.split('/embed/')[1].split('/')[0];
+      else id = u.searchParams.get('v') || '';
+
+      const start = parseYouTubeTime(u.searchParams.get('t') || u.searchParams.get('start') || '');
+      return {id,start};
     }catch(e){
       const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([A-Za-z0-9_-]{6,})/);
-      return m ? m[1] : '';
+      const tm = url.match(/[?&](?:t|start)=([^&]+)/);
+      return {id:m ? m[1] : '', start:tm ? parseYouTubeTime(tm[1]) : 0};
     }
   }
 
   function videoHtml(url){
-    const id = youtubeId(url);
-    if(!id) return '';
-    return '<div class="safir-video"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/'+id+'" title="فيديو سفير الحرمين" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>';
+    const info = youtubeInfo(url);
+    if(!info.id) return '';
+    const params = ['rel=0','modestbranding=1'];
+    if(info.start > 0) params.push('start='+info.start);
+    const embed = 'https://www.youtube.com/embed/'+info.id+'?'+params.join('&');
+    return '<div class="safir-video-wrap"><div class="safir-video"><iframe loading="lazy" src="'+embed+'" title="فيديو سفير الحرمين" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div><a class="safir-youtube-fallback" href="'+esc(url)+'" target="_blank" rel="noopener">إذا لم يعمل الفيديو اضغط هنا لفتحه على YouTube</a></div>';
   }
 
   function esc(s=''){
