@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="سفير الحرمين فريق متخصص في تقديم خدمات شاملة ومتميزة للحجاج والمعتمرين، نسعى دائماً لضمان راحتكم وسلامتكم وتقديم تجربة فريدة لا تُنسى">
+  <meta name="keywords"
+    content="سفير الحرمين, safir alharamain, عمرة, حج, حج وعمرة, رحلات داخلية, سياحة داخلية, حجز فنادق, حجز طيران, استخراج باركود, تأشيرات, تأشيرة سياحية, تأشيرة شخصية, تأشيرة زيارة أعمال, تأشيرة مرور, تأشيرة ترانزيت, نقل سياحي" />
+  <meta name="theme-color" content="#fff">
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:site_name" content="سفير الحرمين" />
+  <meta property="og:title" content="سفير الحرمين" />
+  <meta property="og:locale" content="ar" />
+  <meta property="og:description"
+    content="سفير الحرمين فريق متخصص في تقديم خدمات شاملة ومتميزة للحجاج والمعتمرين، نسعى دائماً لضمان راحتكم وسلامتكم وتقديم تجربة فريدة لا تُنسى" />
+  <meta property="og:url" content="https://safiralharamain.com/">
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://safiralharamain.com/img/web-img.png">
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:secure_url" content="https://safiralharamain.com/img/web-img.png" />
+  <meta property="og:image:width" content="1000" />
+  <meta property="og:image:height" content="525" />
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@safiralharamain" />
+  <meta name="twitter:title" content="سفير الحرمين" />
+  <meta name="twitter:description"
+    content="سفير الحرمين فريق متخصص في تقديم خدمات شاملة ومتميزة للحجاج والمعتمرين، نسعى دائماً لضمان راحتكم وسلامتكم وتقديم تجربة فريدة لا تُنسى" />
+  <meta name="twitter:image" content="https://safiralharamain.com/img/web-img.png" />
+
+  <link rel="shortcut icon" href="./img/favicon.ico" />
+  <!-- bootstrap.rtl -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
+    integrity="sha384-dpuaG1suU0eT09tx5plTaGMLBsfDLzUCCUXOY2j/LSvXYuG6Bqs43ALlhIqAJVRb" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <link rel="stylesheet" href="./css/call-us.css">
+  <link rel="stylesheet" href="./css/scroll-up.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/umrah-portal.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="./js/firebaseConfig.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8128856608204696"
+    crossorigin="anonymous"></script>
+  <title>شرح الحج | سفير الحرمين</title>
+</head>
+
+<body>
+
+  <!-- scroll up -->
+  <div class="scrollUp">
+    <img src="./img/icons/arrow-up.svg">
+  </div>
+  <!-- call us -->
+  <div class="call-us">
+    <div class="call mb-3 position-relative">
+      <ul class="calls-company hidden">
+        <li class="company-item mb-2">
+          <a href="tel:+201150337383" target="_blank" class="text-secondary">اتصـــالات</a>
+        </li>
+        <li class="company-item mb-2">
+          <a href="tel:+201206858005" target="_blank" class="text-secondary">أورانــــــــج</a>
+        </li>
+        <li class="company-item">
+          <a href="tel:+201040558052" target="_blank" class="text-secondary">فودافون</a>
+        </li>
+      </ul>
+    </div>
+
+    <a href="http://wa.me/+201150337383" target="_blank" class="whats d-block mb-3">
+      <img src="./img/icons/whatsapp.svg" alt="whatsapp icon">
+    </a>
+
+    <div class="share-icon position-relative">
+      <ul class="social-media hidden">
+        <li class="social-item d-flex justify-content-center mb-2">
+          <div class="facebook d-flex align-items-center" onclick="shareOnFacebook()">
+            <a target="_blank" style="color: #0d6efd;">Facebook</a>
+            <img src="./img/facebook-logo.png" class="ms-2" width="22px" alt="facebook-logo">
+          </div>
+        </li>
+        <li class="social-item d-flex justify-content-center mb-2">
+          <div class="x d-flex align-items-center" onclick="shareOnTwitter()">
+            <a target="_blank" class="text-black">X (Twitter)</a>
+            <img src="./img/x.png" class="ms-2" width="22px" alt="x-logo">
+          </div>
+        </li>
+        <li class="social-item d-flex justify-content-center mb-2">
+          <div class="whatsapp d-flex align-items-center" onclick="shareOnWhatsApp()">
+            <a target="_blank" class="text-success">WhatsApp</a>
+            <img src="./img/whats-logo.svg" class="ms-2" width="22px" alt="whats-logo">
+          </div>
+        </li>
+        <li class="social-item d-flex justify-content-center mb-2">
+          <div class="copy-link d-flex align-items-center" onclick="copyLink()">
+            <span class="text-regular text-primary fs-7 mt-1">نسخ الرابط</span>
+            <img src="./img/icons/copy.svg" class="ms-2" width="18px" alt="whats-logo">
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!--start navbar-->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+
+      <a class="navbar-brand logo ms-1 cursor-pointer" href="/">
+        <img src="./img/logo.svg" alt="Safir Al Harameen logo">
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item pt-2">
+            <a class="home nav-link cursor-pointer" aria-current="page" href="/">الرئيسية</a>
+          </li>
+          <li class="nav-item pt-2">
+            <a class="who-are-we nav-link max-content" aria-current="page" href="who-are-we.html">من نحن</a>
+          </li>
+
+          <li class="nav-item pt-2 dropdown">
+            <span class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">العمرة</span>
+            <ul class="dropdown-menu rounded-4 px-2">
+              <li><a class="dropdown-item nav-link" href="umrah-trips.html">بوابة العمرة</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-programs.html">برامج العمرة</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-guide.html">شرح الحج</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-past-trips.html">رحلاتنا السابقة</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-booking.html">حجز العمرة</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item pt-2 dropdown">
+            <span class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">الحج</span>
+            <ul class="dropdown-menu rounded-4 px-2">
+              <li><a class="dropdown-item nav-link" href="hajj-trips.html">برامج الحج</a></li>
+              <li><a class="dropdown-item nav-link" href="hajj-guide.html">شرح الحج</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item pt-2 dropdown">
+            <span class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              الخدمات
+            </span>
+            <ul class="dropdown-menu rounded-4 px-2">
+              <li>
+                <a class="travel-trips dropdown-item nav-link" href="travel-trips.html">الرحلات السياحية</a>
+              </li>
+              <li>
+                <a class="hotel-booking dropdown-item nav-link" href="hotel-booking.html">حجز الفنادق</a>
+              </li>
+              <li>
+                <a class="flight-booking dropdown-item nav-link" href="flight-booking.html">حجز الطيران</a>
+              </li>
+              <li>
+                <a class="visa dropdown-item nav-link" href="visa.html">استخراج التأشيرات</a>
+              </li>
+              <li>
+                <a class="barcode dropdown-item nav-link" href="barcode.html">استخراج الباركود</a>
+              </li>
+              <li>
+                <a class="transport dropdown-item nav-link" href="transport.html">النقل والليموزين</a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item pt-2">
+            <a class="news nav-link max-content" aria-current="page" href="news.html">المقالات | الأخبــار</a>
+          </li>
+          <li class="nav-item pt-2">
+            <a class="gallery nav-link" aria-current="page" href="gallery.html">المعرض</a>
+          </li>
+          <li class="nav-item pt-2">
+            <a class="questions nav-link max-content" aria-current="page" href="questions.html">الأسئلة الشائعة</a>
+          </li>
+
+          <a class="contact-us text-white btn-secondary rounded-5 px-5 max-content cursor-pointer"
+            style="padding-top: 14px; padding-bottom: 9px;" aria-current="page" href="#footer">
+            تواصل معنا
+          </a>
+
+        </ul>
+
+      </div>
+    </div>
+  </nav>
+  <!--end navbar-->
+
+  <header class="umrah-head-page head-img position-relative overflow-hidden mb-5">
+    <div class="container">
+      <div class="row">
+        <div
+          class="head-page-text d-flex align-items-center justify-content-center text-white text-center position-relative z-3">
+          <div>
+            <h1 class="fs-1 mb-3 mt-3">شرح العمرة</h1>
+            <p class="fs-3 lh-lg">
+              دليل مبسط للحج والاستعداد للمناسك
+            </p>
+            <p class="head-slogan fs-4 mb-0 mx-auto bg-secondary rounded-5 px-5 user-select-none">
+              اغتنم الفرصة واستمتع معنا بمناسك العمرة
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <section class="safir-content-section alt">
+    <div class="container">
+      <div class="safir-section-head">
+        <span class="safir-kicker">دليل الحاج</span>
+        <h2 data-hajj-title>شرح الحج</h2>
+        <p data-hajj-subtitle>محتوى توعوي مبسط يساعدك على الاستعداد للمناسك.</p>
+      </div>
+      <div class="safir-guide-card">
+        <div class="safir-guide-body" data-hajj-body>جاري تحميل المحتوى...</div>
+        <div class="safir-media-grid" data-hajj-images></div>
+        <div class="safir-video-grid" data-hajj-videos></div>
+      </div>
+    </div>
+  </section>
+  <div class="safir-lightbox"><button type="button" data-lightbox-close>×</button><img alt="صورة شرح الحج"></div>
+<!-- start join-us -->
+  <section class="join-us section bg-light text-center" id="contact-umrah">
+    <div class="container">
+      <h2 class="head-center position-relative mb-5">انضم إلينا</h2>
+      <p class="fs-4">أرسل رقم الواتس ليصلك آخر التحديثات والعروض الحصرية</p>
+
+      <form action="" class="d-flex mx-auto whats-form">
+        <button type="button" class="send-btn btn btn-secondary btn-lg rounded-4 me-2 px-5"
+          style="padding-top: .75rem;">إرسال</button>
+        <input type="text" class="whats-input form-control form-control-lg rounded-4" style="padding-top: .75rem;"
+          placeholder="رقم الواتس">
+      </form>
+    </div>
+  </section>
+  <!-- end join-us -->
+
+  <!-- start footer -->
+  <footer class="section" id="footer">
+    <div class="container">
+      <div class="container">
+        <div class="row">
+
+          <div class="col col-12 col-md-12 col-lg-5 p-4">
+            <div class="co-info">
+              <img src="./img/logo.svg" class="logo mb-3" alt="Safir Al Harameen logo">
+              <p class="text-gray lh-lg" style="max-width: 450px;">
+                "سفـير الحرمـين" يتميز بخبرته الطويلة والمتميزة في تقديم خدمات متكاملة تشمل الإقامة، النقل، والمرافق
+                الشخصية، مما يسهم في توفير تجربة مميزة وخالية من القلق لكل من يسعى لأداء فريضة العمرة أو الحج.
+              </p>
+            </div>
+
+            <ul class="social-media-links d-flex align-items-center">
+
+              <a href="https://www.facebook.com/safiralharamain/" target="_blank"
+                class="social rounded-circle d-flex align-items-center justify-content-center">
+                <img src="./img/icons/facebook.png" alt="facebook icon">
+              </a>
+
+              <a href="https://www.instagram.com/safir.alharamain" target="_blank"
+                class="social rounded-circle d-flex align-items-center justify-content-center">
+                <img src="./img/icons/instagram.png" alt="instagram icon">
+              </a>
+
+              <a href="https://x.com/safiralharamain" target="_blank"
+                class="social rounded-circle d-flex align-items-center justify-content-center">
+                <img src="./img/icons/twitter-X-logo.png" alt="twitter icon">
+              </a>
+
+              <a href="https://www.snapchat.com/add/safiralharamain" target="_blank"
+                class="social rounded-circle d-flex align-items-center justify-content-center">
+                <img src="./img/icons/snapchat.png" alt="snapchat icon">
+              </a>
+
+              <a href="https://www.tiktok.com/@safiralharamain" target="_blank"
+                class="social rounded-circle d-flex align-items-center justify-content-center">
+                <img src="./img/icons/tictok-icon.png" alt="tictok icon">
+              </a>
+
+              <a href="https://youtube.com/@safiral-haramain" target="_blank"
+                class="social rounded-circle d-flex align-items-center justify-content-center">
+                <img src="./img/icons/youtube.png" alt="youtube icon">
+              </a>
+
+            </ul>
+
+          </div>
+
+          <div class="col col-12 col-md-4 col-lg-2 p-4">
+            <div class="links">
+              <h5 class="max-content text-secondary" style="margin-bottom: 35px;">روابط هامة</h5>
+              <ul class="text-regular text-gray max-content me-4">
+                <li>
+                  <a href="" class="text-gray">الشروط والأحكام</a>
+                </li>
+                <li>
+                  <a href="" class="text-gray">سياسة الخصوصية</a>
+                </li>
+                <li>
+                  <a href="questions.html" class="text-gray">الأسئلة الشائعة</a>
+                </li>
+                <li>
+                  <a href="" class="text-gray">خدمات التقسيط</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="col col-12 col-md-8 col-lg-5 p-4">
+            <div class="contact-section">
+              <div class="contact">
+                <h5 class="text-secondary mb-4">تواصل معنا</h5>
+
+                <ul class="text-regular text-gray">
+
+                  <li class="list-unerline d-flex align-items-center">
+                    <div class="contact-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <img src="./img/icons/phone.png" alt="phone icon">
+                    </div>
+                    <div class="fs-4 text-gray m-0 mt-2 ms-3 d-flex flex-column">
+                      <a href="tel:+201150337383" target="_blank" class="text-gray"
+                        style="letter-spacing: 1.15px">01150337383</a>
+                      <a href="tel:+201206858005" target="_blank" class="text-gray">01206858005</a>
+                      <a href="tel:+201040558052" target="_blank" class="text-gray">01040558052</a>
+                    </div>
+                  </li>
+
+                  <li class="list-unstyled d-flex align-items-center">
+                    <div class="contact-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <img src="./img/icons/whats.png" alt="whats icon">
+                    </div>
+                    <a href="http://wa.me/+201150337383" target="_blank" class="fs-4 text-gray m-0 mt-2 ms-3"
+                      style="letter-spacing: 1.15px">01150337383</a>
+                  </li>
+
+                  <li class="list-unstyled d-flex align-items-center">
+                    <div class="contact-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <img src="./img/icons/mail.png" alt="phone icon">
+                    </div>
+                    <a href="mailto:safiralharamain@gmail.com" target="_blank" class="fs-5 text-gray m-0 ms-3"
+                      style="font-family: 'arial';">
+                      safiralharamain@gmail.com</a>
+                  </li>
+
+                  <li class="list-unstyled d-flex align-items-center">
+                    <div class="contact-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <img src="./img/icons/map.png" alt="phone icon">
+                    </div>
+                    <p class="lh-lg m-0 mt-2 ms-3">
+                      الفروع : محطة الرمل - الحضرة - الساعة
+                      <br>
+                      العوايد - العصافرة - المنشية
+                    </p>
+                  </li>
+
+                </ul>
+
+              </div>
+              <div class="payment">
+                <h5 class="text-secondary mt-5 mb-4">وسائل الدفع</h5>
+                <ul class="d-flex align-items-center">
+                  <li><img src="./img/icons/cash.png" alt="cash"></li>
+                  <li><img src="./img/icons/vf-cash.png" alt="vf-cash"></li>
+                  <li><img src="./img/icons/visa-card.png" alt="visa-card"></li>
+                  <li><img src="./img/icons/bank-transfer.png" alt="bank-transfer"></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </footer>
+
+  <div class="copyrights text-light text-regular py-4 bg-primary">
+    <div class="container">
+      <div class="row row-cols-1 row-cols-md-12 row-cols-lg-2 text-center">
+        <div class="col right d-flex align-items-center justify-content-center">
+          <p class="my-0" style="padding-top: 4px;">جميع الحقوق محفوظة | سفــير الحرمــين</p>
+          <p class="mb-0 ms-1" style="font-family: 'arial';">&copy; 2025</p>
+        </div>
+        <div class="col">
+          <p class="my-2 mb-0 left">تم التطوير بواسطة م.
+            <a href="https://wa.me/+201060344718" target="_blank" class="text-bold text-white">
+              حســن سعـــد
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- start footer -->
+
+  <!-- start loading page -->
+  <section class="loading-overlay">
+    <span class="loader"></span>
+  </section>
+  <!-- end loading page -->
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
+  <script src="./js/loading-page.js" defer></script>
+  <script src="./js/active-nav-link.js" defer></script>
+  <script src="./js/open-close-nav.js" defer></script>
+  <script src="./js/call-us.js" defer></script>
+  <script src="./js/SharePage.js" defer></script>
+  <script src="./js/scroll-up.js" defer></script>
+  <script src="./js/send-to-whatsapp.js" defer></script>
+  <script src="./js/umrah-portal.js" defer></script>
+  <script>function scrollToUp(){scrollTo(0,0)}</script>
+</body>
+</html>
