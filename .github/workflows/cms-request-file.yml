@@ -1,0 +1,51 @@
+name: Apply CMS request file
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cms-requests/*.json'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Apply latest CMS request
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff --name-only HEAD^ HEAD -- 'cms-requests/*.json' | tail -n 1)"
+          if [ -z "$FILE" ]; then
+            echo "No CMS request file found."
+            exit 0
+          fi
+          node - "$FILE" <<'NODE'
+          const fs = require('fs');
+          const file = process.argv[2];
+          const data = JSON.parse(fs.readFileSync(file,'utf8'));
+          const allowed = ['brand','umrahGuide','hajjGuide','pastTrips'];
+          const clean = {};
+          for (const k of allowed) if (Object.prototype.hasOwnProperty.call(data,k)) clean[k]=data[k];
+          fs.writeFileSync('data/site-content.json', JSON.stringify(clean,null,2)+'\n');
+          NODE
+
+      - name: Commit applied content
+        shell: bash
+        run: |
+          if git diff --quiet -- data/site-content.json; then
+            echo "No content change."
+            exit 0
+          fi
+          git config user.name "Safir CMS"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/site-content.json
+          git commit -m "Apply CMS content update"
+          git push
