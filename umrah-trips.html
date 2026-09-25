@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="./css/call-us.css">
   <link rel="stylesheet" href="./css/scroll-up.css">
   <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/umrah-portal.css">
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   <script src="./js/firebaseConfig.js"></script>
@@ -202,7 +203,19 @@
     </div>
   </header>
 
-  <section class="mb-5">
+  <div class="safir-portal-nav">
+    <div class="container">
+      <div class="inner">
+        <a href="#current-umrah">برامج العمرة</a>
+        <a href="#umrah-guide">شرح العمرة</a>
+        <a href="#hajj-guide">شرح الحج</a>
+        <a href="#past-trips">رحلاتنا السابقة</a>
+        <a href="#booking">حجز واستفسار</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="mb-5" id="current-umrah">
     <div class="container">
       <div class="mb-4" style="margin-top: 4.5rem;">
         <h2 class="head-right position-relative d-inline-block fs-4 ms-4">أحدث رحلات العمرة</h2>
@@ -227,8 +240,56 @@
     </ul>
   </nav> -->
 
+  <section class="safir-content-section alt" id="umrah-guide">
+    <div class="container">
+      <div class="safir-section-head">
+        <span class="safir-kicker">دليلك قبل السفر</span>
+        <h2 data-umrah-title>شرح العمرة</h2>
+        <p data-umrah-subtitle>تعرف على ترتيب المناسك والتجهيزات المهمة قبل رحلتك.</p>
+      </div>
+      <div class="safir-guide-card">
+        <div class="safir-guide-body" data-umrah-body>جاري تحميل المحتوى...</div>
+        <div class="safir-media-grid" data-umrah-images></div>
+        <div class="safir-video-grid" data-umrah-videos></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="safir-content-section" id="hajj-guide">
+    <div class="container">
+      <div class="safir-section-head">
+        <span class="safir-kicker">دليل الحاج</span>
+        <h2 data-hajj-title>شرح الحج</h2>
+        <p data-hajj-subtitle>محتوى توعوي مبسط يساعدك على الاستعداد للمناسك.</p>
+      </div>
+      <div class="safir-guide-card">
+        <div class="safir-guide-body" data-hajj-body>جاري تحميل المحتوى...</div>
+        <div class="safir-media-grid" data-hajj-images></div>
+        <div class="safir-video-grid" data-hajj-videos></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="safir-content-section alt" id="past-trips">
+    <div class="container">
+      <div class="safir-section-head">
+        <span class="safir-kicker">ذكريات من أرض الحرمين</span>
+        <h2>من رحلاتنا السابقة</h2>
+        <p>صور وفيديوهات من رحلات سفير الحرمين السابقة. يتم تحديث هذا القسم باستمرار من لوحة الإدارة.</p>
+      </div>
+      <div class="safir-past-grid" data-past-trips>
+        <div class="safir-empty">جاري تحميل رحلاتنا السابقة...</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="safir-lightbox" aria-hidden="true">
+    <button type="button" data-lightbox-close aria-label="إغلاق">×</button>
+    <img alt="صورة من سفير الحرمين">
+  </div>
+
   <!-- start booking form -->
-  <section class="section bg-secondary">
+  <section class="section bg-secondary" id="booking">
     <div class="container">
       <div class="booking-form bg-white rounded-5 shadow p-5 mx-auto" style="max-width: 900px;">
         <h3 class="booking-title fs-1 text-center text-secondary mx-auto mt-2 mb-5">حجـز رحلـة عمـرة</h3>
@@ -648,6 +709,7 @@
   <script src="./js/SharePage.js" defer></script>
   <script src="./js/scroll-up.js" defer></script>
   <script src="./js/send-to-whatsapp.js" defer></script>
+  <script src="./js/umrah-portal.js" defer></script>
   <script>
     function scrollToUp() { scrollTo(0, 0) }
   </script>
