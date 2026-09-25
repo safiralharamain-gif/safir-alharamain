@@ -1,34 +1,30 @@
 <!doctype html>
 <html lang="ar">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title>إدارة موقع سفير الحرمين</title>
-<link rel="stylesheet" href="./css/admin.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>إدارة محتوى سفير الحرمين</title>
+  <link rel="stylesheet" href="./css/admin.css">
 </head>
 <body>
 <main class="admin-shell">
   <header class="admin-head">
     <div>
       <h1>إدارة محتوى سفير الحرمين</h1>
-      <p>شرح العمرة · شرح الحج · رحلاتنا السابقة</p>
+      <p>بدون مفاتيح GitHub — عدّل المحتوى ثم اضغط حفظ</p>
     </div>
     <div class="top-actions">
       <a class="btn btn-light" href="./umrah-trips.html" target="_blank">فتح صفحة العمرة</a>
-      <button class="btn btn-primary" id="saveAll">حفظ ونشر التعديلات</button>
+      <a class="btn btn-light" href="https://github.com/safiralharamain-gif/safir-alharamain/upload/main/img/content" target="_blank">رفع صور جديدة</a>
+      <button class="btn btn-primary" id="saveAll">حفظ التعديلات</button>
     </div>
   </header>
 
-  <section class="card">
-    <h2>دخول الإدارة</h2>
-    <p class="muted">استخدم Fine-grained GitHub token لحسابك بصلاحية Contents: Read and write على مستودع safiralharamain فقط. المفتاح لا يُحفظ داخل الموقع، ويظل في جلسة المتصفح الحالية فقط.</p>
-    <div class="token-row">
-      <input id="githubToken" type="password" autocomplete="off" placeholder="github_pat_...">
-      <button class="btn btn-dark" id="connectBtn">اتصال وتحميل البيانات</button>
-    </div>
-    <div id="status" class="status"></div>
-  </section>
+  <div class="notice">
+    <strong>طريقة الحفظ الجديدة:</strong>
+    لا يوجد Token. عند الضغط على «حفظ التعديلات» ستفتح GitHub شاشة تأكيد مرتبطة بحسابك الحالي؛ اضغط إنشاء الطلب فقط، وسيقوم الموقع بتطبيق التعديل تلقائيًا.
+  </div>
 
   <section class="card">
     <h2>شرح العمرة</h2>
@@ -36,14 +32,10 @@
       <div><label>العنوان</label><input id="umrahTitle"></div>
       <div><label>العنوان الفرعي</label><input id="umrahSubtitle"></div>
     </div>
-    <div style="margin-top:14px"><label>الشرح</label><textarea id="umrahBody"></textarea></div>
-    <div class="grid2" style="margin-top:14px">
-      <div>
-        <label>روابط الصور — رابط في كل سطر</label>
-        <textarea id="umrahImages"></textarea>
-        <div class="upload-line"><input id="umrahUpload" type="file" accept="image/*" multiple><button class="btn btn-light" data-upload="umrah">رفع الصور إلى الموقع</button></div>
-      </div>
-      <div><label>روابط فيديوهات YouTube — رابط في كل سطر</label><textarea id="umrahVideos"></textarea></div>
+    <div class="mt"><label>الشرح</label><textarea id="umrahBody"></textarea></div>
+    <div class="grid2 mt">
+      <div><label>الصور — رابط أو مسار صورة في كل سطر</label><textarea id="umrahImages"></textarea></div>
+      <div><label>فيديوهات YouTube — رابط في كل سطر</label><textarea id="umrahVideos"></textarea></div>
     </div>
   </section>
 
@@ -53,28 +45,27 @@
       <div><label>العنوان</label><input id="hajjTitle"></div>
       <div><label>العنوان الفرعي</label><input id="hajjSubtitle"></div>
     </div>
-    <div style="margin-top:14px"><label>الشرح</label><textarea id="hajjBody"></textarea></div>
-    <div class="grid2" style="margin-top:14px">
-      <div>
-        <label>روابط الصور — رابط في كل سطر</label>
-        <textarea id="hajjImages"></textarea>
-        <div class="upload-line"><input id="hajjUpload" type="file" accept="image/*" multiple><button class="btn btn-light" data-upload="hajj">رفع الصور إلى الموقع</button></div>
-      </div>
-      <div><label>روابط فيديوهات YouTube — رابط في كل سطر</label><textarea id="hajjVideos"></textarea></div>
+    <div class="mt"><label>الشرح</label><textarea id="hajjBody"></textarea></div>
+    <div class="grid2 mt">
+      <div><label>الصور — رابط أو مسار صورة في كل سطر</label><textarea id="hajjImages"></textarea></div>
+      <div><label>فيديوهات YouTube — رابط في كل سطر</label><textarea id="hajjVideos"></textarea></div>
     </div>
   </section>
 
   <section class="card">
     <div class="trip-head">
-      <div><h2 style="margin-bottom:5px">رحلاتنا السابقة</h2><div class="muted">أضف رحلة مثل 2-9 أو 3-10 وارفع صورها وروابط فيديوهاتها.</div></div>
+      <div>
+        <h2>رحلاتنا السابقة</h2>
+        <p class="muted">أضف رحلة مثل «رحلة 2-9» ثم ضع صورها وفيديوهاتها.</p>
+      </div>
       <button class="btn btn-primary" id="addTrip">+ إضافة رحلة</button>
     </div>
     <div id="tripEditors"></div>
   </section>
 
-  <section class="card">
-    <button class="btn btn-primary" id="saveAllBottom">حفظ ونشر التعديلات</button>
-    <span class="muted" style="margin-right:10px">بعد الحفظ سيُنشأ Commit جديد على GitHub.</span>
+  <section class="card bottom-save">
+    <button class="btn btn-primary" id="saveAllBottom">حفظ التعديلات</button>
+    <span id="status" class="status-inline">جاهز للتعديل.</span>
   </section>
 </main>
 <script src="./js/admin.js"></script>
