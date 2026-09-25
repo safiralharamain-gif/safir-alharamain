@@ -129,15 +129,21 @@
           </li>
 
           <li class="nav-item pt-2 dropdown">
-            <span class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              العمرة
-            </span>
+            <span class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">العمرة</span>
             <ul class="dropdown-menu rounded-4 px-2">
-              <li><a class="dropdown-item nav-link" href="umrah-trips.html#current-umrah">برامج العمرة</a></li>
-              <li><a class="dropdown-item nav-link" href="umrah-trips.html#umrah-guide">شرح العمرة</a></li>
-              <li><a class="dropdown-item nav-link" href="umrah-trips.html#past-trips">رحلاتنا السابقة</a></li>
-              <li><a class="dropdown-item nav-link" href="umrah-trips.html#booking">حجز العمرة</a></li>
-              <li><a class="dropdown-item nav-link" href="umrah-trips.html#contact-umrah">تواصل واستفسار</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-trips.html">بوابة العمرة</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-programs.html">برامج العمرة</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-guide.html">شرح العمرة</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-past-trips.html">رحلاتنا السابقة</a></li>
+              <li><a class="dropdown-item nav-link" href="umrah-booking.html">حجز العمرة</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item pt-2 dropdown">
+            <span class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">الحج</span>
+            <ul class="dropdown-menu rounded-4 px-2">
+              <li><a class="dropdown-item nav-link" href="hajj-trips.html">برامج الحج</a></li>
+              <li><a class="dropdown-item nav-link" href="hajj-guide.html">شرح الحج</a></li>
             </ul>
           </li>
 
@@ -146,9 +152,6 @@
               الخدمات
             </span>
             <ul class="dropdown-menu rounded-4 px-2">
-              <li>
-                <a class="hajj-trips dropdown-item nav-link" href="hajj-trips.html">رحلات الحج</a>
-              </li>
               <li>
                 <a class="travel-trips dropdown-item nav-link" href="travel-trips.html">الرحلات السياحية</a>
               </li>
@@ -198,11 +201,9 @@
         <div
           class="head-page-text d-flex align-items-center justify-content-center text-white text-center position-relative z-3">
           <div>
-            <h1 class="fs-1 mb-3 mt-3">أفضل أسعار برامج العمرة</h1>
+            <h1 class="fs-1 mb-3 mt-3">بوابة العمرة</h1>
             <p class="fs-3 lh-lg">
-              وأفضل الخدمات من طيران وفنادق وباصات
-              <br>
-              في مكة المكرمة والمدينة المنورة
+              كل ما تحتاجه للعمرة من برامج وشرح وحجز ومحتوى رحلاتنا السابقة
             </p>
             <p class="head-slogan fs-4 mb-0 mx-auto bg-secondary rounded-5 px-5 user-select-none">
               اغتنم الفرصة واستمتع معنا بمناسك العمرة
@@ -212,321 +213,21 @@
       </div>
     </div>
   </header>
-
-  <div class="safir-portal-nav">
-    <div class="container">
-      <div class="inner">
-        <a href="#current-umrah">برامج العمرة</a>
-        <a href="#umrah-guide">شرح العمرة</a>
-        <a href="#hajj-guide">شرح الحج</a>
-        <a href="#past-trips">رحلاتنا السابقة</a>
-        <a href="#booking">حجز واستفسار</a>
-      </div>
-    </div>
-  </div>
-
-  <section class="mb-5" id="current-umrah">
-    <div class="container">
-      <div class="mb-4" style="margin-top: 4.5rem;">
-        <h2 class="head-right position-relative d-inline-block fs-4 ms-4">أحدث رحلات العمرة</h2>
-        <span class="text-regular fs-6 text-secondary d-inline-block ms-1">١٤٤٨ هـ</span>
-      </div>
-      <!-- render all of 'new umrah trips' from 'umrah-trips-2.js' file -->
-      <div class="new-umrah-trip row row-cols-1 row-cols-md-2 mx-auto" style="max-width: 1100px;">
-      </div>
-    </div>
-  </section>
-
-  <!-- <nav class="d-flex justify-content-center mb-5">
-    <ul class="pagination">
-      <li class="page-item text-center">
-        <a class="page-link cursor-pointer d-block rounded-circle text-black fs-5 me-3"
-          style="width: 45px; height: 45px; line-height: 1.9!important;" href="umrah-trips.html">1</a>
-      </li>
-      <li class="page-item text-center">
-        <a class="page-link cursor-pointer d-block rounded-circle text-black fs-5 me-3"
-          style="width: 45px; height: 45px; line-height: 1.9!important;" onclick="scrollToUp()">2</a>
-      </li>
-    </ul>
-  </nav> -->
-
-  <section class="safir-content-section alt" id="umrah-guide">
+  <section class="safir-content-section alt">
     <div class="container">
       <div class="safir-section-head">
-        <span class="safir-kicker">دليلك قبل السفر</span>
-        <h2 data-umrah-title>شرح العمرة</h2>
-        <p data-umrah-subtitle>تعرف على ترتيب المناسك والتجهيزات المهمة قبل رحلتك.</p>
+        <span class="safir-kicker">كل خدمات العمرة في مكان واحد</span>
+        <h2>بوابة العمرة</h2>
+        <p>اختر ما تحتاجه: البرامج الحالية، شرح المناسك، الحجز، أو مشاهدة صور وفيديوهات رحلاتنا السابقة.</p>
       </div>
-      <div class="safir-guide-card">
-        <div class="safir-guide-body" data-umrah-body>جاري تحميل المحتوى...</div>
-        <div class="safir-media-grid" data-umrah-images></div>
-        <div class="safir-video-grid" data-umrah-videos></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="safir-content-section" id="hajj-guide">
-    <div class="container">
-      <div class="safir-section-head">
-        <span class="safir-kicker">دليل الحاج</span>
-        <h2 data-hajj-title>شرح الحج</h2>
-        <p data-hajj-subtitle>محتوى توعوي مبسط يساعدك على الاستعداد للمناسك.</p>
-      </div>
-      <div class="safir-guide-card">
-        <div class="safir-guide-body" data-hajj-body>جاري تحميل المحتوى...</div>
-        <div class="safir-media-grid" data-hajj-images></div>
-        <div class="safir-video-grid" data-hajj-videos></div>
+      <div class="safir-hub-grid">
+        <a class="safir-hub-card" href="umrah-programs.html"><strong>برامج العمرة</strong><span>الرحلات والأسعار والتفاصيل الحالية</span></a>
+        <a class="safir-hub-card" href="umrah-guide.html"><strong>شرح العمرة</strong><span>شرح المناسك بالصور والفيديو</span></a>
+        <a class="safir-hub-card" href="umrah-booking.html"><strong>حجز العمرة</strong><span>أرسل طلب الحجز والاستفسار</span></a>
+        <a class="safir-hub-card" href="umrah-past-trips.html"><strong>رحلاتنا السابقة</strong><span>صور وفيديوهات من رحلات سفير الحرمين</span></a>
       </div>
     </div>
-  </section>
-
-  <section class="safir-content-section alt" id="past-trips">
-    <div class="container">
-      <div class="safir-section-head">
-        <span class="safir-kicker">ذكريات من أرض الحرمين</span>
-        <h2>من رحلاتنا السابقة</h2>
-        <p>صور وفيديوهات من رحلات سفير الحرمين السابقة. يتم تحديث هذا القسم باستمرار من لوحة الإدارة.</p>
-      </div>
-      <div class="safir-past-grid" data-past-trips>
-        <div class="safir-empty">جاري تحميل رحلاتنا السابقة...</div>
-      </div>
-    </div>
-  </section>
-
-  <div class="safir-lightbox" aria-hidden="true">
-    <button type="button" data-lightbox-close aria-label="إغلاق">×</button>
-    <img alt="صورة من سفير الحرمين">
-  </div>
-
-  <!-- start booking form -->
-  <section class="section bg-secondary" id="booking">
-    <div class="container">
-      <div class="booking-form bg-white rounded-5 shadow p-5 mx-auto" style="max-width: 900px;">
-        <h3 class="booking-title fs-1 text-center text-secondary mx-auto mt-2 mb-5">حجـز رحلـة عمـرة</h3>
-        <form class="text-regular" action="">
-
-          <div class="row mb-3">
-            <div class="col">
-              <label class="text-gray mb-1 mb-1" for="name">الاسم</label>
-              <input type="text" name="name" id="name" class="form-control form-control-lg rounded-4">
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1" for="phone">الموبايل</label>
-              <input type="text" name="phone" id="phone" class="form-control form-control-lg rounded-4">
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col">
-              <label class="text-gray mb-1 mb-1" for="address">العنوان</label>
-              <input type="text" name="address" id="address" class="form-control form-control-lg rounded-4">
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1" for="governorate">المحافظة</label>
-              <input type="text" name="governorate" id="governorate" class="form-control form-control-lg rounded-4">
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col">
-              <label class="text-gray mb-1" for="trip-name">الرحلـة</label>
-              <input type="text" name="trip-name" id="trip-name" class="form-control form-control-lg rounded-4">
-
-              <!-- <div class="dropdown">
-                <button class="select text-start btn bg-white border rounded-4 w-100 dropdown-toggle" name="trip-name"
-                  id="trip-name" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  *حدد الرحلة
-                </button>
-                <ul class="dropdown-menu rounded-4">
-                  <li class="dropdown-item">عمرة ترانزيت</li>
-                  <li class="dropdown-item">عرض خاص</li>
-                  <li class="dropdown-item">رحلة عمرة المولد النبوي</li>
-                  <li class="dropdown-item">رحلة عمرة اقتصادي</li>
-                  <li class="dropdown-item">رحلة عمرة 3 نجــوم</li>
-                  <li class="dropdown-item">رحلة عمرة 4 نجــوم</li>
-                  <li class="dropdown-item">رحلة عمرة 5 نجــوم</li>
-                  <li class="dropdown-item">رحلة عمرة رجــب</li>
-                  <li class="dropdown-item">رحلة عمرة شعبـان</li>
-                  <li class="dropdown-item">رحلة عمرة شعبـان رمضـان</li>
-                  <li class="dropdown-item">رحلة عمرة رمضــان</li>
-                </ul>
-              </div> -->
-
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1 mb-1">تاريخ الرحلـة</label>
-              <div class="form-control form-control-lg rounded-4 ps-2 pb-0"
-                style="min-height: 46px; padding-top: .35rem ;">
-                <input type="text" class="day p-0 pt-2 border-0 text-center" placeholder="يوم" style="width: 35px;">
-                <span class="d-inline-block text-gray fs-6 mt-1 user-select-none">/</span>
-                <input type="text" class="month p-0 pt-2 border-0 text-center" placeholder="شهر" style="width: 35px;">
-                <span class="d-inline-block text-gray fs-6 mt-1 user-select-none">/</span>
-                <input type="text" class="year p-0 pt-2 border-0 text-center" style="width: 55px;">
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-4">
-            <div class="col">
-              <label class="text-gray mb-1" for="adults-count">عدد الأفراد (الكبار)</label>
-              <input type="text" name="adults-count" id="adults-count" class="form-control form-control-lg rounded-4">
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1" for="children-count">عدد الأفراد (الصغار)</label>
-              <input type="text" name="children-count" id="children-count"
-                class="form-control form-control-lg rounded-4">
-            </div>
-          </div>
-
-          <span class="text-gray d-block mb-3">نوع الغرفة</span>
-          <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-5 mb-4" style="padding-right: 12px;">
-
-            <div class="col form-check mb-3">
-              <input class="form-check-input" type="radio" name="room-type" id="five">
-              <label class="form-check-label" for="five">
-                خماسـي
-              </label>
-            </div>
-
-            <div class="col form-check mb-3 ">
-              <input class="form-check-input" type="radio" name="room-type" id="five-four">
-              <label class="form-check-label max-content" for="five-four">
-                خماسـي / رباعـي
-              </label>
-            </div>
-
-            <div class="col form-check mb-3">
-              <input class="form-check-input" type="radio" name="room-type" id="four" checked>
-              <label class="form-check-label" for="four">
-                رباعـي
-              </label>
-            </div>
-
-            <div class="col form-check mb-3">
-              <input class="form-check-input" type="radio" name="room-type" id="three">
-              <label class="form-check-label" for="three">
-                ثلاثـي
-              </label>
-            </div>
-
-            <div class="col form-check">
-              <input class="form-check-input" type="radio" name="room-type" id="two">
-              <label class="form-check-label" for="two">
-                ثنائــي
-              </label>
-            </div>
-
-
-          </div>
-
-          <div class="row mb-4">
-            <span class="text-gray mb-3">الوجبــات</span>
-            <div class="d-flex">
-              <div class="form-check m-left">
-                <input class="form-check-input" type="radio" name="meals" id="meals-yes">
-                <label class="form-check-label mt-2px" for="meals-yes">
-                  نعم
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="meals" id="meals-no" checked>
-                <label class="form-check-label mt-2px" for="meals-no">
-                  لا
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-4">
-            <span class="text-gray mb-3">طريقة الدفع</span>
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-auto ps-4">
-              <div class="col form-check me-lg-5 mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-cash" checked>
-                <label class="form-check-label mt-2px" for="payment-cash">
-                  كاش
-                </label>
-              </div>
-              <div class="col form-check me-lg-5 mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-wallet-cash">
-                <label class="form-check-label mt-2px max-content" for="payment-wallet-cash">
-                  محفظة كاش
-                </label>
-              </div>
-              <div class="col form-check me-lg-5 mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-bank">
-                <label class="form-check-label mt-2px max-content" for="payment-bank">
-                  تحويل بنكى
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-visa">
-                <label class="form-check-label mt-2px" for="payment-visa">
-                  فيزا
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-4" style="margin-top: -1rem;">
-            <label class="form-label text-gray" for="msg">رسالــة / استفســار</label>
-            <textarea class="form-control rounded-4" id="msg" rows="5" style="padding: 1rem;"></textarea>
-          </div>
-
-          <div class="row">
-            <span class="text-gray mb-3">مين بلغك بالرحلة ؟</span>
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 ps-4">
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="friend" checked>
-                <label class="form-check-label mt-2px" for="friend">
-                  صديق رشحنا ليك
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="by-facebook">
-                <label class="form-check-label mt-2px" for="by-facebook">
-                  عن طريق الفيسبوك
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="by-whats">
-                <label class="form-check-label mt-2px max-content" for="by-whats">
-                  عن طريق الواتساب
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="by-web">
-                <label class="form-check-label mt-2px max-content" for="by-web">
-                  عن طريق الموقع
-                </label>
-              </div>
-              <div class="col form-check">
-                <input class="form-check-input" type="radio" name="who-told-you" id="former-client">
-                <label class="form-check-label mt-2px max-content" for="former-client">
-                  عميل سابق
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-5">
-            <button type="button" class="send btn btn-secondary btn-lg rounded-4 px-5 d-inline-flex align-items-center"
-              style="padding-top: .75rem; width: 200px;">
-              <span class="mx-2">إرسال</span>
-              <img src="./img/icons/send.svg" width="25px" alt="send-icon" style="margin-top: -4px;">
-            </button>
-            <button type="button" class="cencel btn btn-light btn-lg transition rounded-4 px-5 ms-3"
-              style="padding-top: .75rem; width: 200px;">
-              إلغاء
-            </button>
-          </div>
-
-        </form>
-      </div>
-    </div>
-  </section>
-  <!-- end booking form -->
-
-  <!-- start join-us -->
+  </section><!-- start join-us -->
   <section class="join-us section bg-light text-center" id="contact-umrah">
     <div class="container">
       <h2 class="head-center position-relative mb-5">انضم إلينا</h2>
@@ -710,19 +411,13 @@
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     </script>
   <script src="./js/loading-page.js" defer></script>
-  <script src="./js/goToDetails.js" defer></script>
-  <script src="./js/umrah-trips.js" defer></script>
-  <script src="./js/umrah-booking.js" defer></script>
   <script src="./js/active-nav-link.js" defer></script>
   <script src="./js/open-close-nav.js" defer></script>
   <script src="./js/call-us.js" defer></script>
   <script src="./js/SharePage.js" defer></script>
   <script src="./js/scroll-up.js" defer></script>
   <script src="./js/send-to-whatsapp.js" defer></script>
-  <script src="./js/umrah-portal.js" defer></script>
-  <script>
-    function scrollToUp() { scrollTo(0, 0) }
-  </script>
-</body>
 
+  <script>function scrollToUp(){scrollTo(0,0)}</script>
+</body>
 </html>
