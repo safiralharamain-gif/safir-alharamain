@@ -160,7 +160,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f "$PWD/build_project/preview.png"
-          timeout 25 env SAFIR_PREVIEW=1 xvfb-run -a "$GODOT" --path "$PWD/build_project" --rendering-method gl_compatibility 2>&1 | tee preview.log || true
+          timeout 25 env SAFIR_PREVIEW=1 SAFIR_PREVIEW_PATH="$PWD/build_project/preview.png" xvfb-run -a "$GODOT" --path "$PWD/build_project" --rendering-method gl_compatibility 2>&1 | tee preview.log || true
           test -s "$PWD/build_project/preview.png"
           cp "$PWD/build_project/preview.png" "$PWD/dist/v8-preview.png"
           ls -lh "$PWD/dist/v8-preview.png"
