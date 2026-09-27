@@ -115,31 +115,46 @@ flap=bpy.data.objects.new("Ihram_Izar_Overlap",me); bpy.context.collection.objec
 finish(flap,"Ihram_Izar_Overlap","pelvis")
 
 # --- Piece 2: RIDA ---
-# One shoulder is covered and the opposite shoulder remains exposed, matching the user's photo.
-# Front/back are curved diagonal drapes that hug the torso rather than a cylindrical shell.
-rows=18; cols=9
-def make_rida_surface(name,front=True):
+# Curved drape based on the user's reference: LEFT shoulder covered, RIGHT shoulder exposed.
+# Back panel widens toward the waist and follows the torso curvature instead of hanging like a board.
+
+def add_weighted_rida(o):
+    groups={}
+    for bn in ("spine_02","clavicle_l","upperarm_l"):
+        if bn in arm.data.bones:
+            groups[bn]=o.vertex_groups.new(name=bn)
+    md=o.modifiers.new("Armature",'ARMATURE'); md.object=arm
+    o.parent=arm; o.matrix_parent_inverse=arm.matrix_world.inverted()
+    zlo=waist-h*0.02; zhi=shoulder+h*0.03
+    for idx,v in enumerate(o.data.vertices):
+        t=max(0.0,min(1.0,(v.co.z-zlo)/(zhi-zlo)))
+        w_cl=0.08+0.70*t
+        w_arm=0.05*t
+        w_sp=max(0.0,1.0-w_cl-w_arm)
+        if "spine_02" in groups: groups["spine_02"].add([idx],w_sp,'REPLACE')
+        if "clavicle_l" in groups: groups["clavicle_l"].add([idx],w_cl,'REPLACE')
+        if "upperarm_l" in groups: groups["upperarm_l"].add([idx],w_arm,'REPLACE')
+
+def make_curved_drape(name,front):
+    rows=18; cols=11
     verts=[]; faces=[]
-    # diagonal centreline: covered LEFT shoulder -> opposite/right waist
-    sx=-0.22; sz=shoulder+h*0.012
-    ex= 0.17; ez=waist+h*0.045
-    dx=ex-sx; dz=ez-sz
-    plen=max(1e-6,math.sqrt(dx*dx+dz*dz))
-    px=-dz/plen; pz=dx/plen
     for j in range(rows):
-        t=j/(rows-1)
-        cx=sx+(ex-sx)*t
-        cz=sz+(ez-sz)*t
-        width=(0.19 + 0.035*math.sin(t*math.pi))
+        t=j/(rows-1)  # 0 top shoulder, 1 lower waist
+        z=shoulder*(1-t)+(waist+h*0.025)*t
+        # Narrow at the covered shoulder, broader toward the waist/back.
+        half=0.13 + 0.19*t
+        cx=-0.205 + 0.15*t
         for i in range(cols):
-            u=(i/(cols-1)-0.5)*2.0
-            x=cx+px*width*u
-            z=cz+pz*width*u
-            # gently curve around the chest/back, with woven folds
-            torso_y=0.188 + 0.025*(1.0-min(1.0,abs(x)/0.32))
-            fold=0.006*math.sin(i*1.7+j*0.45)
-            y=(-torso_y-fold) if front else (torso_y+fold)
-            verts.append((x,y,z))
+            u=i/(cols-1)
+            x=cx+(u-0.5)*2.0*half
+            xn=max(-1.0,min(1.0,x/0.36))
+            # Torso curvature; front/back are close to the skin with soft cloth folds.
+            curve=0.170 + 0.035*(1.0-xn*xn)
+            fold=0.006*math.sin(i*1.55+j*0.48)
+            y=(-curve-fold) if front else (curve+fold)
+            # Lower right edge hangs a little more, creating the diagonal towel edge.
+            z2=z - 0.035*u*t
+            verts.append((x,y,z2))
     for j in range(rows-1):
         for i in range(cols-1):
             a=j*cols+i; b=a+1; cc=(j+1)*cols+i+1; d=(j+1)*cols+i
@@ -147,35 +162,60 @@ def make_rida_surface(name,front=True):
     me=bpy.data.meshes.new(name+"Mesh"); me.from_pydata(verts,[],faces); me.update()
     o=bpy.data.objects.new(name,me); bpy.context.collection.objects.link(o)
     o.data.materials.append(CLOTH)
-    sol=o.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.007
-    bev=o.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.003; bev.segments=2
-    bind_to_bone(o,"spine_02")
+    sol=o.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.0065
+    bev=o.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.0032; bev.segments=2
+    add_weighted_rida(o)
     return o
 
-rida_front=make_rida_surface("Ihram_Rida_Front",True)
-rida_back=make_rida_surface("Ihram_Rida_Back",False)
+rida_back=make_curved_drape("Ihram_Rida_Back",False)
+rida_front=make_curved_drape("Ihram_Rida_Front",True)
 
-# Small rounded bridge over the LEFT shoulder connects front and back visually.
-bpy.ops.mesh.primitive_cube_add(location=(-0.235,0.0,shoulder+h*0.005),scale=(0.135,0.195,0.030))
-bridge=bpy.context.object
-bridge.name="Ihram_Rida_Shoulder"
-bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-md2=bridge.modifiers.new("Rounded",'BEVEL'); md2.width=0.034; md2.segments=6
-bpy.context.view_layer.objects.active=bridge; bpy.ops.object.modifier_apply(modifier=md2.name)
+# Curved shoulder bridge from front to back over the LEFT shoulder.
+rows=7; cols=9
+verts=[]; faces=[]
+for j in range(rows):
+    vv=j/(rows-1)
+    y=-0.175 + 0.350*vv
+    # arc over shoulder
+    z=shoulder + 0.050*math.sin(vv*math.pi)
+    for i in range(cols):
+        u=i/(cols-1)
+        x=-0.205 + (u-0.5)*0.24
+        z2=z - 0.012*abs(u-0.5)
+        verts.append((x,y,z2))
+for j in range(rows-1):
+    for i in range(cols-1):
+        a=j*cols+i; b=a+1; cc=(j+1)*cols+i+1; d=(j+1)*cols+i
+        faces.append((a,b,cc,d))
+me=bpy.data.meshes.new("RidaShoulderMesh"); me.from_pydata(verts,[],faces); me.update()
+bridge=bpy.data.objects.new("Ihram_Rida_Shoulder",me); bpy.context.collection.objects.link(bridge)
 bridge.data.materials.append(CLOTH)
-bind_to_bone(bridge,"spine_02")
+sol=bridge.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.0065
+bev=bridge.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.0032; bev.segments=2
+add_weighted_rida(bridge)
 
-# Hanging end on the covered side to give the loose-towel look seen in real ihram.
-hang_x=-0.23; hang_y=-0.205
-verts=[
-    (hang_x-0.10,hang_y,shoulder-h*0.02),
-    (hang_x+0.08,hang_y,shoulder-h*0.05),
-    (hang_x+0.06,hang_y-0.006,waist-h*0.12),
-    (hang_x-0.09,hang_y+0.004,waist-h*0.09)
-]
-me=bpy.data.meshes.new("RidaLooseEndMesh"); me.from_pydata(verts,[],[(0,1,2,3)]); me.update()
+# Loose hanging towel edge down the covered left side.
+rows=10; cols=5
+verts=[]; faces=[]
+for j in range(rows):
+    t=j/(rows-1)
+    z=(shoulder-h*0.035)*(1-t)+(waist-h*0.13)*t
+    cx=-0.285+0.055*t
+    for i in range(cols):
+        u=i/(cols-1)
+        x=cx+(u-0.5)*0.13
+        y=-0.178-0.004*math.sin(j*0.8+i)
+        verts.append((x,y,z))
+for j in range(rows-1):
+    for i in range(cols-1):
+        a=j*cols+i; b=a+1; cc=(j+1)*cols+i+1; d=(j+1)*cols+i
+        faces.append((a,b,cc,d))
+me=bpy.data.meshes.new("RidaLooseEndMesh"); me.from_pydata(verts,[],faces); me.update()
 loose=bpy.data.objects.new("Ihram_Rida_LooseEnd",me); bpy.context.collection.objects.link(loose)
-finish(loose,"Ihram_Rida_LooseEnd","spine_02")
+loose.data.materials.append(CLOTH)
+sol=loose.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.006
+bev=loose.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.003; bev.segments=2
+add_weighted_rida(loose)
 
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.abspath(out),export_format='GLB',
