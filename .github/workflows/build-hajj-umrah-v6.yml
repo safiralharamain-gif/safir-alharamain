@@ -66,8 +66,10 @@ jobs:
           set -euo pipefail
           ROOT="$PWD"
           ASSETS="$ROOT/build_tools/makehuman_assets"
-          SKIN="$(find "$ASSETS" -type f -path '*/skins/young_caucasian_male/young_caucasian_male.mhmat' | head -n1)"
-          SKIN_SUIT="$(find "$ASSETS" -type f -path '*/skins/young_caucasian_male/young_caucasian_male_special_suit.mhmat' | head -n1)"
+          echo "Available male skins:"
+          find "$ASSETS" -type f -iname '*male*.mhmat' | head -n 30 || true
+          SKIN="$(find "$ASSETS" -type f -name 'young_caucasian_male.mhmat' -print -quit)"
+          SKIN_SUIT="$(find "$ASSETS" -type f -name 'young_caucasian_male_special_suit.mhmat' -print -quit)"
           HAIR="$(find "$ASSETS" -type f -iname '*.mhclo' | grep -Ei '/hair/|short0?4' | head -n1 || true)"
           test -n "$SKIN"
           test -n "$SKIN_SUIT"
