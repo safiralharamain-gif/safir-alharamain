@@ -42,6 +42,7 @@ var wardrobe_ihram: Node3D
 var wardrobe_pos := Vector3(5.0, 0.0, -3.8)
 var miqat_pos := Vector3(0.0, 0.0, -24.0)
 var bus_pos := Vector3(5.2, 0.0, -34.0)
+var bus_board_pos := Vector3(7.15, 0.0, -38.05)
 
 var current_clip := ""
 var pulse_t := 0.0
@@ -414,6 +415,15 @@ func _spawn_bus(pos: Vector3, yaw: float = 0.0) -> void:
 	b.scale = Vector3.ONE * 0.96
 	add_child(b)
 	parked_buses.append(b)
+	var sb := StaticBody3D.new()
+	sb.position = pos + Vector3(0,1.58,0)
+	sb.rotation.y = yaw
+	add_child(sb)
+	var cs := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(2.68,3.18,10.3)
+	cs.shape = shape
+	sb.add_child(cs)
 
 
 func _spawn_car(pos: Vector3, lane_dir: float, speed: float, tint: Color) -> void:
@@ -430,7 +440,7 @@ func _spawn_car(pos: Vector3, lane_dir: float, speed: float, tint: Color) -> voi
 
 
 func _tint_named_meshes(n: Node, pattern: String, color: Color) -> void:
-	if n is MeshInstance3D and pattern.to_lower() in n.name.to_lower():
+	if n is MeshInstance3D and n.name.to_lower().contains(pattern.to_lower()):
 		var mi := n as MeshInstance3D
 		var m := StandardMaterial3D.new()
 		m.albedo_color = color
@@ -488,7 +498,7 @@ func _build_crowd_and_traffic() -> void:
 	_spawn_car(Vector3(-9.5,0,-20.0),1.0,4.4,Color("#d0cbc0"))
 
 	# Boarding point near the SAFIR coach's front-right passenger door.
-	var board_pt := bus_pos + Vector3(1.95,0,-4.05)
+	var board_pt := bus_board_pos
 	# Pilgrims walking from the hotel/miqat direction to the user's bus.
 	_spawn_npc(IHRAM_GLB,Vector3(0.8,0,-17.0),[Vector3(2.0,0,-23.0),Vector3(4.2,0,-29.0),board_pt],1.28,0.98,0.0,true)
 	_spawn_npc(IHRAM_GLB,Vector3(-0.4,0,-15.5),[Vector3(1.2,0,-21.0),Vector3(3.6,0,-28.0),board_pt+Vector3(0.0,0,0.65)],1.18,1.04,2.2,true)
@@ -795,7 +805,7 @@ func _update_interaction() -> void:
 		if d2 < 2.8:
 			msg = "اضغط F عند الميقات لبدء النسك"
 	elif mission == 2:
-		var d3 := player.global_position.distance_to(bus_pos)
+		var d3 := player.global_position.distance_to(bus_board_pos)
 		if d3 < 3.2:
 			msg = "اضغط F لركوب الحافلة"
 	interaction_label.text = msg
@@ -811,9 +821,9 @@ func _interact() -> void:
 		_update_hud()
 	elif mission == 1 and player.global_position.distance_to(miqat_pos) < 2.8:
 		mission = 2
-		_set_objective(bus_pos + Vector3(0,3.4,0))
+		_set_objective(bus_board_pos + Vector3(0,2.8,0))
 		_update_hud()
-	elif mission == 2 and player.global_position.distance_to(bus_pos) < 3.2:
+	elif mission == 2 and player.global_position.distance_to(bus_board_pos) < 2.3:
 		mission = 3
 		objective_marker.visible = false
 		_update_hud()
