@@ -139,103 +139,107 @@ me=bpy.data.meshes.new("IhramIzarOverlapMesh"); me.from_pydata(verts,[],[(0,1,2,
 flap=bpy.data.objects.new("Ihram_Izar_Overlap",me); bpy.context.collection.objects.link(flap)
 transfer_weights(flap); add_modifiers(flap)
 
-# ---------------- upper RIDA: stable diagonal wrap ----------------
-# V11.1: the rida is NOT weight-transferred from the whole torso. That caused the cloth to crumple.
-# It is a stable unsewn wrap controlled only by the chest + covered left shoulder.
+# ---------------- upper RIDA: body-surface wrap ----------------
+# Build the upper cloth directly from the character torso surface. This guarantees that the rida
+# hugs the chest/back and inherits the exact original skin weights, instead of floating as panels.
+
+rida_z0=waist+H*.025
+rida_z1=shoulder+H*.035
+selected=[]
+for poly in body.data.polygons:
+    ps=[body_pts[i] for i in poly.vertices]
+    ctr=sum(ps,Vector((0,0,0)))/len(ps)
+    if ctr.z<rida_z0 or ctr.z>rida_z1:
+        continue
+    t=(ctr.z-rida_z0)/max(.0001,(rida_z1-rida_z0))
+    # coordinate toward the covered LEFT side
+    lx=left_sign*ctr.x
+    # At waist the wrap reaches across the torso; near shoulder it narrows to the covered side.
+    threshold=H*(-.115 + .155*t)
+    # Prevent far upper-arm/hand geometry from becoming part of the cloth.
+    if lx>threshold and abs(ctr.x)<H*.235 and abs(ctr.y)<H*.17:
+        selected.append(poly)
+
+if len(selected)<50:
+    raise SystemExit("Too few torso faces selected for rida: "+str(len(selected)))
+
+vmap={}
+newverts=[]
+orig_for_new=[]
+newfaces=[]
+offset=H*.0065
+for poly in selected:
+    face=[]
+    for oi in poly.vertices:
+        if oi not in vmap:
+            ov=body.data.vertices[oi]
+            ni=len(newverts)
+            vmap[oi]=ni
+            # body-local offset along the skin normal creates a thin cotton layer.
+            newverts.append(tuple(ov.co + ov.normal*offset))
+            orig_for_new.append(oi)
+        face.append(vmap[oi])
+    newfaces.append(tuple(face))
+
+me=bpy.data.meshes.new("IhramRidaBodyWrapMesh")
+me.from_pydata(newverts,[],newfaces); me.update()
+rida=bpy.data.objects.new("Ihram_Rida_BodyWrap",me)
+bpy.context.collection.objects.link(rida)
+
+# Copy the exact source-body vertex weights one-for-one.
+for vg in body.vertex_groups:
+    rida.vertex_groups.new(name=vg.name)
+for ni,oi in enumerate(orig_for_new):
+    ov=body.data.vertices[oi]
+    for g in ov.groups:
+        src_group=body.vertex_groups[g.group]
+        if src_group.name in rida.vertex_groups:
+            rida.vertex_groups[src_group.name].add([ni],g.weight,'REPLACE')
+
+world_matrix=body.matrix_world.copy()
+rida.parent=arm
+rida.matrix_parent_inverse=arm.matrix_world.inverted()
+rida.matrix_world=world_matrix
+am=rida.modifiers.new("Armature",'ARMATURE'); am.object=arm
+add_modifiers(rida)
+
+# A narrow loose end falls from the covered shoulder, like the real towel edge in the references.
 spine_name="spine_02" if "spine_02" in arm.data.bones else "spine_01"
 clav_name="clavicle_l"
 if clav_name not in arm.data.bones:
-    raise SystemExit("Missing left clavicle for rida")
+    raise SystemExit("Missing left clavicle")
 
-def bind_rida(o):
-    vg_sp=o.vertex_groups.new(name=spine_name)
-    vg_cl=o.vertex_groups.new(name=clav_name)
+def bind_loose(o):
+    vg1=o.vertex_groups.new(name=spine_name)
+    vg2=o.vertex_groups.new(name=clav_name)
     for idx,v in enumerate(o.data.vertices):
-        # upper vertices follow the shoulder more; lower ones follow the torso.
-        t=max(0.0,min(1.0,(v.co.z-(waist-H*.02))/(shoulder-(waist-H*.02))))
-        wc=.12+.56*t
-        ws=1.0-wc
-        vg_sp.add([idx],ws,'REPLACE')
-        vg_cl.add([idx],wc,'REPLACE')
-    am=o.modifiers.new("Armature",'ARMATURE'); am.object=arm
-    o.parent=arm
-    o.matrix_parent_inverse=arm.matrix_world.inverted()
+        t=max(0,min(1,(v.co.z-(waist-H*.05))/(shoulder-(waist-H*.05))))
+        wc=.18+.52*t
+        vg1.add([idx],1-wc,'REPLACE'); vg2.add([idx],wc,'REPLACE')
+    md=o.modifiers.new("Armature",'ARMATURE'); md.object=arm
+    o.parent=arm; o.matrix_parent_inverse=arm.matrix_world.inverted()
 
-rows=18; cols=12
-
-def make_stable_drape(name,front=True):
-    verts=[]; faces=[]
-    for j in range(rows):
-        t=j/(rows-1)  # 0 shoulder, 1 lower torso
-        z=shoulder*(1-t)+(waist+H*.035)*t
-        _,ry=cross_extents(z,H*.025)
-        # Covered-left-shoulder diagonal: narrow at shoulder, broader toward waist.
-        cx=left_sign*(H*.105*(1-t) - H*.025*t)
-        half=H*(.066 + .038*t)
-        for i in range(cols):
-            u=i/(cols-1)
-            x=cx+(u-.5)*2*half
-            surf=ry+H*.007
-            y=(-surf if front else surf)
-            # very shallow folds only
-            y += (-1 if front else 1)*H*.0018*math.sin(i*1.45+j*.42)
-            # outer lower edge drops slightly, like a towel fold
-            z2=z-H*.012*t*u
-            verts.append((x,y,z2))
-    for j in range(rows-1):
-        for i in range(cols-1):
-            a=j*cols+i; b=a+1; cc=(j+1)*cols+i+1; d=(j+1)*cols+i
-            faces.append((a,b,cc,d))
-    me=bpy.data.meshes.new(name+"Mesh"); me.from_pydata(verts,[],faces); me.update()
-    o=bpy.data.objects.new(name,me); bpy.context.collection.objects.link(o)
-    bind_rida(o); add_modifiers(o)
-    return o
-
-front=make_stable_drape("Ihram_Rida_Front",True)
-back=make_stable_drape("Ihram_Rida_Back",False)
-
-# Compact bridge over the covered LEFT shoulder.
-_,shoulder_depth=cross_extents(shoulder,H*.025)
-rows2=8; cols2=8
-verts=[]; faces=[]
-xcenter=left_sign*H*.105
-for j in range(rows2):
-    v=j/(rows2-1)
-    y=-(shoulder_depth+H*.007) + 2*(shoulder_depth+H*.007)*v
-    z=shoulder+H*.014*math.sin(v*math.pi)
-    for i in range(cols2):
-        u=i/(cols2-1)
-        x=xcenter+(u-.5)*H*.105
-        verts.append((x,y,z-H*.003*abs(u-.5)))
-for j in range(rows2-1):
-    for i in range(cols2-1):
-        a=j*cols2+i; b=a+1; cc=(j+1)*cols2+i+1; d=(j+1)*cols2+i
-        faces.append((a,b,cc,d))
-me=bpy.data.meshes.new("IhramShoulderBridgeMesh"); me.from_pydata(verts,[],faces); me.update()
-bridge=bpy.data.objects.new("Ihram_Rida_Shoulder",me); bpy.context.collection.objects.link(bridge)
-bind_rida(bridge); add_modifiers(bridge)
-
-# Loose hanging end on the covered side, kept narrow and chest-bound.
-rr=12; cc=5; verts=[]; faces=[]
+rr=14; cc=6; verts=[]; faces=[]
 for j in range(rr):
     t=j/(rr-1)
-    z=(shoulder-H*.02)*(1-t)+(waist-H*.075)*t
+    z=(shoulder-H*.01)*(1-t)+(waist-H*.09)*t
     _,ry=cross_extents(z,H*.025)
     for i in range(cc):
         u=i/(cc-1)
-        x=left_sign*(H*.155-H*.018*t)+(u-.5)*H*.055
-        y=-(ry+H*.008)-H*.0015*math.sin(j+i)
+        # hangs down the covered left side, close to the torso
+        x=left_sign*(H*.145-H*.018*t)+(u-.5)*H*.062
+        y=-(ry+H*.009)-H*.0015*math.sin(j*.7+i)
         verts.append((x,y,z))
 for j in range(rr-1):
     for i in range(cc-1):
-        a=j*cc+i; b=a+1; cc2=(j+1)*cc+i+1; d=(j+1)*cc+i
-        faces.append((a,b,cc2,d))
-me=bpy.data.meshes.new("IhramLooseEdgeMesh"); me.from_pydata(verts,[],faces); me.update()
-loose=bpy.data.objects.new("Ihram_Rida_LooseEdge",me); bpy.context.collection.objects.link(loose)
-bind_rida(loose); add_modifiers(loose)
+        a=j*cc+i; b=a+1; c2=(j+1)*cc+i+1; d=(j+1)*cc+i
+        faces.append((a,b,c2,d))
+me2=bpy.data.meshes.new("IhramLooseEndMesh"); me2.from_pydata(verts,[],faces); me2.update()
+loose=bpy.data.objects.new("Ihram_Rida_LooseEnd",me2); bpy.context.collection.objects.link(loose)
+bind_loose(loose); add_modifiers(loose)
 
 # Validate garment distance: reject an absurdly oversized ihram.
-garments=[izar,flap,front,back,bridge,loose]
+garments=[izar,flap,rida,loose]
 for g in garments:
     xs=[abs(v.co.x) for v in g.data.vertices]
     if xs and max(xs)>H*.40:
