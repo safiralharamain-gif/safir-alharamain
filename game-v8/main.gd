@@ -592,7 +592,12 @@ func _save_preview_if_needed(delta: float) -> void:
 		return
 	preview_saved = true
 	var img := get_viewport().get_texture().get_image()
-	img.save_png(ProjectSettings.globalize_path("res://preview.png"))
+	var out_path := OS.get_environment("SAFIR_PREVIEW_PATH")
+	if out_path.is_empty():
+		out_path = ProjectSettings.globalize_path("user://preview.png")
+	print("[preview] saving to ", out_path)
+	var err := img.save_png(out_path)
+	print("[preview] save result=", err)
 	get_tree().quit()
 
 func _build_hud() -> void:
