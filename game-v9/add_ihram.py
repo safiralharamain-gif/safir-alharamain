@@ -92,57 +92,52 @@ flap=bpy.data.objects.new("Ihram_Izar_Overlap",me); bpy.context.collection.objec
 finish(flap,"Ihram_Izar_Overlap","pelvis")
 
 # --- Piece 2: RIDA ---
-# Front diagonal sheet: from lower right torso to covered left shoulder, close to chest.
-rows=14; cols=9
+# One continuous wrapped shawl surface. It circles the torso/back as a single cloth piece and
+# narrows toward the top so the RIGHT shoulder/chest remains exposed while the LEFT shoulder is covered.
+rows=17; cols=34
+rx=0.385; ry=0.255
 verts=[]; faces=[]
 for j in range(rows):
     t=j/(rows-1)
-    z=(waist+h*0.045)+(shoulder-(waist+h*0.045))*t
-    cx=(0.15*(1-t))+(-0.17*t)
-    half=(0.24 + 0.055*math.sin(t*math.pi))
+    zbase=(waist+h*0.015)+(shoulder+h*0.010-(waist+h*0.015))*t
+    # Bottom nearly encircles the torso. Top begins at the back-right and wraps across the back
+    # to the front-left, leaving the right shoulder open like the user's reference.
+    start=math.radians(-72 + 122*t)
+    end=math.radians(252)
     for i in range(cols):
-        u=(i/(cols-1)-0.5)*2.0
-        x=cx+u*half
-        # follow torso curvature instead of a flat board
-        y=-0.205 - 0.035*(1-(x/0.40)**2) - 0.007*math.sin(i*1.5+j*0.35)
+        u=i/(cols-1)
+        a=start+(end-start)*u
+        # Woven vertical folds, kept close to the body.
+        fold=1.0 + 0.020*math.sin(a*8.0+0.65) + 0.009*math.sin(a*15.0+j*0.32)
+        x=rx*fold*math.cos(a)
+        y=ry*fold*math.sin(a)
+        # Lift cloth slightly over the covered LEFT shoulder (angle around 180 degrees).
+        left_peak=math.exp(-((a-math.pi)/0.52)**2)
+        z=zbase + (h*0.045*t*left_peak)
         verts.append((x,y,z))
 for j in range(rows-1):
     for i in range(cols-1):
-        a=j*cols+i; b=a+1; c=(j+1)*cols+i+1; d=(j+1)*cols+i
-        faces.append((a,b,c,d))
-me=bpy.data.meshes.new("RidaFrontMesh"); me.from_pydata(verts,[],faces); me.update()
-front=bpy.data.objects.new("Ihram_Rida_Front",me); bpy.context.collection.objects.link(front)
-finish(front,"Ihram_Rida_Front","spine_02")
+        a=j*cols+i; b=a+1; cc=(j+1)*cols+i+1; d=(j+1)*cols+i
+        faces.append((a,b,cc,d))
+me=bpy.data.meshes.new("RidaWrapMesh"); me.from_pydata(verts,[],faces); me.update()
+rida=bpy.data.objects.new("Ihram_Rida_Wrap",me); bpy.context.collection.objects.link(rida)
+finish(rida,"Ihram_Rida_Wrap","spine_02")
 
-# Back drape: broad cloth down the back, starting on left shoulder, right shoulder still exposed.
-rows=15; cols=11
-verts=[]; faces=[]
-for j in range(rows):
-    t=j/(rows-1)
-    z=(waist+h*0.02)+(shoulder+h*0.012-(waist+h*0.02))*t
-    # upper edge shifts left to leave right shoulder open
-    cx=(-0.04*(1-t))+(-0.16*t)
-    half=0.30 - 0.055*t
-    for i in range(cols):
-        u=(i/(cols-1)-0.5)*2.0
-        x=cx+u*half
-        y=0.205 + 0.028*(1-(x/0.42)**2) + 0.006*math.sin(i*1.35+j*0.42)
-        verts.append((x,y,z))
-for j in range(rows-1):
-    for i in range(cols-1):
-        a=j*cols+i; b=a+1; c=(j+1)*cols+i+1; d=(j+1)*cols+i
-        faces.append((a,b,c,d))
-me=bpy.data.meshes.new("RidaBackMesh"); me.from_pydata(verts,[],faces); me.update()
-back=bpy.data.objects.new("Ihram_Rida_Back",me); bpy.context.collection.objects.link(back)
-finish(back,"Ihram_Rida_Back","spine_02")
-
-# Curved shoulder bridge over LEFT shoulder only.
-bpy.ops.mesh.primitive_uv_sphere_add(segments=36,ring_count=18,location=(-0.24,0.0,shoulder-0.015))
-bridge=bpy.context.object
-bridge.scale=(0.30,0.29,0.10)
-bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-# Cut is visually approximated by a flattened oval, mostly hidden by front/back drapes.
-finish(bridge,"Ihram_Rida_LeftShoulder","spine_02")
+# A soft hanging end on the front-left, integrated visually with the wrap (not a shoulder plate).
+flap_w=0.20
+flap_h=h*0.34
+x0=-0.20
+yf=-ry*1.015
+z_top=shoulder-h*0.02
+verts=[
+    (x0-flap_w/2,yf,z_top),
+    (x0+flap_w/2,yf,z_top-h*0.03),
+    (x0+flap_w*0.43,yf-0.006,z_top-flap_h),
+    (x0-flap_w*0.55,yf+0.004,z_top-flap_h*0.94)
+]
+me=bpy.data.meshes.new("RidaEndMesh"); me.from_pydata(verts,[],[(0,1,2,3)]); me.update()
+endflap=bpy.data.objects.new("Ihram_Rida_End",me); bpy.context.collection.objects.link(endflap)
+finish(endflap,"Ihram_Rida_End","spine_02")
 
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.abspath(out),export_format='GLB',
