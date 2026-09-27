@@ -180,6 +180,10 @@ jobs:
           "$BLENDER" --background --python "$PWD/game-v9/render_preview.py" -- \
             "$PWD/build_project/pilgrim_normal.glb" \
             "$PWD/build_project/pilgrim_ihram.glb" \
+            "$PWD/build_project/npc_older_ihram.glb" \
+            "$PWD/build_project/npc_dark_ihram.glb" \
+            "$PWD/build_project/npc_young_normal.glb" \
+            "$PWD/build_project/npc_stocky_normal.glb" \
             "$PWD/build_project/coach_bus_safir.glb" \
             "$PWD/build_project/coach_bus_standard.glb" \
             "$PWD/dist/v9-preview.png"
