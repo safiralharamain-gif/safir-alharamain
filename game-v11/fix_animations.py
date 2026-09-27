@@ -145,6 +145,10 @@ footL_rest=bones[caL].tail_local.copy()
 footR_rest=bones[caR].tail_local.copy()
 knee_z=(bones[thL].tail_local.z+bones[thR].tail_local.z)*.5
 
+def key_loc(obj,frame,local):
+    obj.location=pose_world(local)
+    obj.keyframe_insert("location",frame=frame)
+
 def make_targets(prefix):
     hL=empty(prefix+"_hand_L",(left_sign*base_hand_x,base_hand_y,base_hand_z))
     hR=empty(prefix+"_hand_R",(right_sign*base_hand_x,base_hand_y,base_hand_z))
