@@ -25,7 +25,7 @@ def cloth_mat():
     m=bpy.data.materials.new("IhramWhiteFabric")
     m.use_nodes=True
     bs=m.node_tree.nodes.get("Principled BSDF")
-    bs.inputs["Base Color"].default_value=(0.97,0.965,0.94,1)
+    bs.inputs["Base Color"].default_value=(0.92,0.915,0.89,1)
     bs.inputs["Roughness"].default_value=0.94
     if "Sheen Weight" in bs.inputs: bs.inputs["Sheen Weight"].default_value=0.18
     noise=m.node_tree.nodes.new("ShaderNodeTexNoise")
@@ -59,17 +59,17 @@ def finish(o,name,bone):
 # --- Piece 1: IZAR ---
 # Close to the hips/legs like a real wrapped towel; the old radius was too large and looked like a barrel.
 radial=56; rings=18
-rx_top=0.285; ry_top=0.185
-rx_bottom=0.300; ry_bottom=0.195
+rx_top=0.265; ry_top=0.172
+rx_bottom=0.248; ry_bottom=0.162
 verts=[]; faces=[]
 for j in range(rings):
     t=j/(rings-1)
-    z=ankle+(waist-ankle)*t
+    z=ankle+(waist-ankle)*t + (0.010*h*math.sin(a*2.0) if j==0 else 0.0)
     rx=rx_bottom*(1-t)+rx_top*t
     ry=ry_bottom*(1-t)+ry_top*t
     for i in range(radial):
         a=2*math.pi*i/radial
-        fold=1.0 + 0.018*math.sin(9*a+0.4) + 0.008*math.sin(17*a)
+        fold=1.0 + 0.040*math.sin(7*a+0.4) + 0.018*math.sin(13*a) + 0.010*math.sin(19*a+1.2)
         x=rx*fold*math.cos(a)
         y=ry*(1.0+0.012*math.sin(11*a))*math.sin(a)
         verts.append((x,y,z))
@@ -81,8 +81,10 @@ for j in range(rings-1):
 me=bpy.data.meshes.new("IzarMesh"); me.from_pydata(verts,[],faces); me.update()
 izar=bpy.data.objects.new("Ihram_Izar",me); bpy.context.collection.objects.link(izar)
 izar.name="Ihram_Izar"; izar.data.materials.append(CLOTH)
-sol=izar.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.006
-bev=izar.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.003; bev.segments=2
+for poly in izar.data.polygons: poly.use_smooth=True
+sub=izar.modifiers.new("FabricSubdivision",'SUBSURF'); sub.levels=1; sub.render_levels=1
+sol=izar.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.0055
+bev=izar.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.0025; bev.segments=2
 
 # Skin the upper part to pelvis and the lower cloth softly to the thighs so walking does not cut through it.
 md=izar.modifiers.new("Armature",'ARMATURE'); md.object=arm
@@ -104,8 +106,8 @@ for idx,v in enumerate(izar.data.vertices):
         groups["thigh_r"].add([idx],right_w,'REPLACE')
 
 # Front overlap: a narrow second layer, not a rigid plate.
-front_y=-ry_top*1.025
-fw=0.22
+front_y=-ry_top*1.055
+fw=0.185
 verts=[
     (-fw,front_y-0.006,ankle+h*0.035),(fw,front_y-0.006,ankle+h*0.035),
     (fw*0.86,front_y-0.010,waist-h*0.015),(-fw*0.86,front_y-0.010,waist-h*0.015)
@@ -142,15 +144,15 @@ def make_curved_drape(name,front):
         t=j/(rows-1)  # 0 top shoulder, 1 lower waist
         z=shoulder*(1-t)+(waist+h*0.025)*t
         # Narrow at the covered shoulder, broader toward the waist/back.
-        half=0.13 + 0.19*t
+        half=0.12 + 0.165*t
         cx=-0.205 + 0.15*t
         for i in range(cols):
             u=i/(cols-1)
             x=cx+(u-0.5)*2.0*half
             xn=max(-1.0,min(1.0,x/0.36))
             # Torso curvature; front/back are close to the skin with soft cloth folds.
-            curve=0.170 + 0.035*(1.0-xn*xn)
-            fold=0.006*math.sin(i*1.55+j*0.48)
+            curve=0.158 + 0.030*(1.0-xn*xn)
+            fold=0.010*math.sin(i*1.55+j*0.48) + 0.004*math.sin(i*2.8-j*0.35)
             y=(-curve-fold) if front else (curve+fold)
             # Lower right edge hangs a little more, creating the diagonal towel edge.
             z2=z - 0.035*u*t
@@ -162,8 +164,10 @@ def make_curved_drape(name,front):
     me=bpy.data.meshes.new(name+"Mesh"); me.from_pydata(verts,[],faces); me.update()
     o=bpy.data.objects.new(name,me); bpy.context.collection.objects.link(o)
     o.data.materials.append(CLOTH)
-    sol=o.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.0065
-    bev=o.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.0032; bev.segments=2
+    for poly in o.data.polygons: poly.use_smooth=True
+    sub=o.modifiers.new("FabricSubdivision",'SUBSURF'); sub.levels=1; sub.render_levels=1
+    sol=o.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.0055
+    bev=o.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.0025; bev.segments=2
     add_weighted_rida(o)
     return o
 
