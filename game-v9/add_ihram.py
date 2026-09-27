@@ -56,88 +56,126 @@ def finish(o,name,bone):
     bind_to_bone(o,bone)
     return o
 
-# --- Piece 1: IZAR, continuous wrapped cloth from waist to ankles ---
-radial=48; rings=15
-rx=0.36; ry=0.245
+# --- Piece 1: IZAR ---
+# Close to the hips/legs like a real wrapped towel; the old radius was too large and looked like a barrel.
+radial=56; rings=18
+rx_top=0.285; ry_top=0.185
+rx_bottom=0.300; ry_bottom=0.195
 verts=[]; faces=[]
 for j in range(rings):
     t=j/(rings-1)
     z=ankle+(waist-ankle)*t
-    # slightly tighter at waist, soft flare at lower hem
-    rr=1.03 - 0.09*t + 0.025*(1-t)
+    rx=rx_bottom*(1-t)+rx_top*t
+    ry=ry_bottom*(1-t)+ry_top*t
     for i in range(radial):
         a=2*math.pi*i/radial
-        wrinkle=1.0 + 0.025*math.sin(8*a+0.8) + 0.012*math.sin(15*a)
-        x=rx*rr*wrinkle*math.cos(a)
-        y=ry*rr*(1.0+0.018*math.sin(10*a))*math.sin(a)
+        fold=1.0 + 0.018*math.sin(9*a+0.4) + 0.008*math.sin(17*a)
+        x=rx*fold*math.cos(a)
+        y=ry*(1.0+0.012*math.sin(11*a))*math.sin(a)
         verts.append((x,y,z))
 for j in range(rings-1):
     for i in range(radial):
         n=(i+1)%radial
-        a=j*radial+i; b=j*radial+n; c=(j+1)*radial+n; d=(j+1)*radial+i
-        faces.append((a,b,c,d))
+        a=j*radial+i; b=j*radial+n; cc=(j+1)*radial+n; d=(j+1)*radial+i
+        faces.append((a,b,cc,d))
 me=bpy.data.meshes.new("IzarMesh"); me.from_pydata(verts,[],faces); me.update()
 izar=bpy.data.objects.new("Ihram_Izar",me); bpy.context.collection.objects.link(izar)
-finish(izar,"Ihram_Izar","pelvis")
+izar.name="Ihram_Izar"; izar.data.materials.append(CLOTH)
+sol=izar.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.006
+bev=izar.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.003; bev.segments=2
 
-# Visible overlapping flap in front, like a real wrapped izar.
-front_y=-ry*1.045
-fw=0.44
+# Skin the upper part to pelvis and the lower cloth softly to the thighs so walking does not cut through it.
+md=izar.modifiers.new("Armature",'ARMATURE'); md.object=arm
+izar.parent=arm; izar.matrix_parent_inverse=arm.matrix_world.inverted()
+groups={}
+for bn in ("pelvis","thigh_l","thigh_r"):
+    if bn in arm.data.bones:
+        groups[bn]=izar.vertex_groups.new(name=bn)
+for idx,v in enumerate(izar.data.vertices):
+    t=max(0.0,min(1.0,(v.co.z-ankle)/(waist-ankle)))
+    if t>0.52 or "thigh_l" not in groups or "thigh_r" not in groups:
+        if "pelvis" in groups: groups["pelvis"].add([idx],1.0,'REPLACE')
+    else:
+        pelvis_w=0.48+0.28*t
+        left_w=(1.0-pelvis_w)*(0.62 if v.co.x<0 else 0.38)
+        right_w=(1.0-pelvis_w)-left_w
+        if "pelvis" in groups: groups["pelvis"].add([idx],pelvis_w,'REPLACE')
+        groups["thigh_l"].add([idx],left_w,'REPLACE')
+        groups["thigh_r"].add([idx],right_w,'REPLACE')
+
+# Front overlap: a narrow second layer, not a rigid plate.
+front_y=-ry_top*1.025
+fw=0.22
 verts=[
-    (-fw/2,front_y-0.008,ankle+h*0.03),(fw/2,front_y-0.008,ankle+h*0.03),
-    (fw/2*0.88,front_y-0.012,waist-h*0.01),(-fw/2*0.88,front_y-0.012,waist-h*0.01)
+    (-fw,front_y-0.006,ankle+h*0.035),(fw,front_y-0.006,ankle+h*0.035),
+    (fw*0.86,front_y-0.010,waist-h*0.015),(-fw*0.86,front_y-0.010,waist-h*0.015)
 ]
 me=bpy.data.meshes.new("IzarOverlapMesh"); me.from_pydata(verts,[],[(0,1,2,3)]); me.update()
 flap=bpy.data.objects.new("Ihram_Izar_Overlap",me); bpy.context.collection.objects.link(flap)
 finish(flap,"Ihram_Izar_Overlap","pelvis")
 
 # --- Piece 2: RIDA ---
-# One continuous wrapped shawl surface. It circles the torso/back as a single cloth piece and
-# narrows toward the top so the RIGHT shoulder/chest remains exposed while the LEFT shoulder is covered.
-rows=17; cols=34
-rx=0.385; ry=0.255
-verts=[]; faces=[]
-for j in range(rows):
-    t=j/(rows-1)
-    zbase=(waist+h*0.015)+(shoulder+h*0.010-(waist+h*0.015))*t
-    # Bottom nearly encircles the torso. Top begins at the back-right and wraps across the back
-    # to the front-left, leaving the right shoulder open like the user's reference.
-    start=math.radians(-72 + 122*t)
-    end=math.radians(252)
-    for i in range(cols):
-        u=i/(cols-1)
-        a=start+(end-start)*u
-        # Woven vertical folds, kept close to the body.
-        fold=1.0 + 0.020*math.sin(a*8.0+0.65) + 0.009*math.sin(a*15.0+j*0.32)
-        x=rx*fold*math.cos(a)
-        y=ry*fold*math.sin(a)
-        # Lift cloth slightly over the covered LEFT shoulder (angle around 180 degrees).
-        left_peak=math.exp(-((a-math.pi)/0.52)**2)
-        z=zbase + (h*0.045*t*left_peak)
-        verts.append((x,y,z))
-for j in range(rows-1):
-    for i in range(cols-1):
-        a=j*cols+i; b=a+1; cc=(j+1)*cols+i+1; d=(j+1)*cols+i
-        faces.append((a,b,cc,d))
-me=bpy.data.meshes.new("RidaWrapMesh"); me.from_pydata(verts,[],faces); me.update()
-rida=bpy.data.objects.new("Ihram_Rida_Wrap",me); bpy.context.collection.objects.link(rida)
-finish(rida,"Ihram_Rida_Wrap","spine_02")
+# One shoulder is covered and the opposite shoulder remains exposed, matching the user's photo.
+# Front/back are curved diagonal drapes that hug the torso rather than a cylindrical shell.
+rows=18; cols=9
+def make_rida_surface(name,front=True):
+    verts=[]; faces=[]
+    # diagonal centreline: covered LEFT shoulder -> opposite/right waist
+    sx=-0.22; sz=shoulder+h*0.012
+    ex= 0.17; ez=waist+h*0.045
+    dx=ex-sx; dz=ez-sz
+    plen=max(1e-6,math.sqrt(dx*dx+dz*dz))
+    px=-dz/plen; pz=dx/plen
+    for j in range(rows):
+        t=j/(rows-1)
+        cx=sx+(ex-sx)*t
+        cz=sz+(ez-sz)*t
+        width=(0.19 + 0.035*math.sin(t*math.pi))
+        for i in range(cols):
+            u=(i/(cols-1)-0.5)*2.0
+            x=cx+px*width*u
+            z=cz+pz*width*u
+            # gently curve around the chest/back, with woven folds
+            torso_y=0.188 + 0.025*(1.0-min(1.0,abs(x)/0.32))
+            fold=0.006*math.sin(i*1.7+j*0.45)
+            y=(-torso_y-fold) if front else (torso_y+fold)
+            verts.append((x,y,z))
+    for j in range(rows-1):
+        for i in range(cols-1):
+            a=j*cols+i; b=a+1; cc=(j+1)*cols+i+1; d=(j+1)*cols+i
+            faces.append((a,b,cc,d))
+    me=bpy.data.meshes.new(name+"Mesh"); me.from_pydata(verts,[],faces); me.update()
+    o=bpy.data.objects.new(name,me); bpy.context.collection.objects.link(o)
+    o.data.materials.append(CLOTH)
+    sol=o.modifiers.new("FabricThickness",'SOLIDIFY'); sol.thickness=0.007
+    bev=o.modifiers.new("SoftClothEdge",'BEVEL'); bev.width=0.003; bev.segments=2
+    bind_to_bone(o,"spine_02")
+    return o
 
-# A soft hanging end on the front-left, integrated visually with the wrap (not a shoulder plate).
-flap_w=0.20
-flap_h=h*0.34
-x0=-0.20
-yf=-ry*1.015
-z_top=shoulder-h*0.02
+rida_front=make_rida_surface("Ihram_Rida_Front",True)
+rida_back=make_rida_surface("Ihram_Rida_Back",False)
+
+# Small rounded bridge over the LEFT shoulder connects front and back visually.
+bpy.ops.mesh.primitive_cube_add(location=(-0.235,0.0,shoulder+h*0.005),scale=(0.135,0.195,0.030))
+bridge=bpy.context.object
+bridge.name="Ihram_Rida_Shoulder"
+bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+md2=bridge.modifiers.new("Rounded",'BEVEL'); md2.width=0.034; md2.segments=6
+bpy.context.view_layer.objects.active=bridge; bpy.ops.object.modifier_apply(modifier=md2.name)
+bridge.data.materials.append(CLOTH)
+bind_to_bone(bridge,"spine_02")
+
+# Hanging end on the covered side to give the loose-towel look seen in real ihram.
+hang_x=-0.23; hang_y=-0.205
 verts=[
-    (x0-flap_w/2,yf,z_top),
-    (x0+flap_w/2,yf,z_top-h*0.03),
-    (x0+flap_w*0.43,yf-0.006,z_top-flap_h),
-    (x0-flap_w*0.55,yf+0.004,z_top-flap_h*0.94)
+    (hang_x-0.10,hang_y,shoulder-h*0.02),
+    (hang_x+0.08,hang_y,shoulder-h*0.05),
+    (hang_x+0.06,hang_y-0.006,waist-h*0.12),
+    (hang_x-0.09,hang_y+0.004,waist-h*0.09)
 ]
-me=bpy.data.meshes.new("RidaEndMesh"); me.from_pydata(verts,[],[(0,1,2,3)]); me.update()
-endflap=bpy.data.objects.new("Ihram_Rida_End",me); bpy.context.collection.objects.link(endflap)
-finish(endflap,"Ihram_Rida_End","spine_02")
+me=bpy.data.meshes.new("RidaLooseEndMesh"); me.from_pydata(verts,[],[(0,1,2,3)]); me.update()
+loose=bpy.data.objects.new("Ihram_Rida_LooseEnd",me); bpy.context.collection.objects.link(loose)
+finish(loose,"Ihram_Rida_LooseEnd","spine_02")
 
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.abspath(out),export_format='GLB',
