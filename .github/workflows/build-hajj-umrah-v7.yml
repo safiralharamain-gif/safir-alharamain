@@ -1,0 +1,153 @@
+name: Build Hajj Umrah Game V7
+
+on:
+  push:
+    branches:
+      - hajj-umrah-game-v7
+    paths:
+      - "game-v7/**"
+      - ".github/workflows/build-hajj-umrah-v7.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - name: Checkout game branch
+        uses: actions/checkout@v4
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip xz-utils libgl1 libegl1 libx11-6 libxkbcommon0 libxcursor1 libxinerama1 libxi6 libxrandr2
+
+      - name: Prepare project
+        run: |
+          rm -rf build_project dist build_tools
+          mkdir -p build_project dist build_tools
+          cp -a game-v7/. build_project/
+
+      - name: Download Blender 4.5 LTS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          BASE="https://download.blender.org/release/Blender4.5/"
+          INDEX="$(curl -fsSL "$BASE")"
+          FILE="$(printf '%s' "$INDEX" | grep -oE 'blender-4\.5\.[0-9]+-linux-x64\.tar\.xz' | sort -V | tail -n1)"
+          test -n "$FILE"
+          curl -fL "${BASE}${FILE}" -o blender.tar.xz
+          tar -xf blender.tar.xz
+          BLENDER="$(find "$PWD" -maxdepth 2 -type f -name blender | head -n1)"
+          chmod +x "$BLENDER"
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+          "$BLENDER" --version | head -n 2
+
+      - name: Download CC0 MakeHuman assets, generator and mocap walk
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          curl -fL "https://files.makehumancommunity.org/plugins/mpfb2-latest.zip" -o mpfb2.zip
+          curl -fL "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip" -o makehuman_assets.zip
+          mkdir -p makehuman_assets
+          unzip -q makehuman_assets.zip -d makehuman_assets
+          curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
+          test -s make-human.py
+
+          # CMU subject 104_02: neutral male walk with clean footfalls.
+          curl -fL "https://github.com/Shriinivas/cmubvh/raw/main/Sequence-102-111/104/Data/104_02.zip" -o neutral_male_walk.zip
+          mkdir -p cmu_walk
+          unzip -q neutral_male_walk.zip -d cmu_walk
+          find cmu_walk -type f | head -n 20
+
+      - name: Generate realistic male pilgrim with natural locomotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          ASSETS="$ROOT/build_tools/makehuman_assets"
+          SKIN="$(find "$ASSETS" -type f -name 'young_caucasian_male.mhmat' -print -quit)"
+          SKIN_SUIT="$(find "$ASSETS" -type f -name 'young_caucasian_male_special_suit.mhmat' -print -quit)"
+          WALK_BVH="$(find "$ROOT/build_tools/cmu_walk" -type f -iname '*.bvh' -print -quit)"
+          test -n "$SKIN"
+          test -n "$SKIN_SUIT"
+          test -n "$WALK_BVH"
+
+          HAIR="$(find "$ASSETS" -type f -iname '*.mhclo' | grep -Ei '/hair/|short0?4|short_hair' | head -n1 || true)"
+          BEARD="$(find "$ASSETS" -type f -iname '*.mhclo' | grep -Ei 'stubble|short.?beard|beard' | head -n1 || true)"
+          echo "Hair asset: ${HAIR:-none}"
+          echo "Beard asset: ${BEARD:-Godot fallback stubble}"
+
+          COMMON=("gender=1.0" "age=0.50" "muscle=0.58" "weight=0.48" "height=0.55" "proportions=0.56" "caucasian=0.70" "african=0.20" "asian=0.10" "tex=1024")
+          EXTRA=()
+          if [ -n "$HAIR" ]; then EXTRA+=("$HAIR"); fi
+          if [ -n "$BEARD" ]; then EXTRA+=("$BEARD"); fi
+
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- \
+            "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/pilgrim_normal.glb" "$SKIN_SUIT" "${EXTRA[@]}" "$WALK_BVH" "${COMMON[@]}"
+
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- \
+            "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/pilgrim_ihram.glb" "$SKIN" "${EXTRA[@]}" "$WALK_BVH" "${COMMON[@]}"
+
+          ls -lh "$ROOT/build_project/"*.glb
+
+      - name: Generate realistic parked coach bus
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$BLENDER" --background --python "$PWD/game-v7/build_bus.py" -- "$PWD/build_project/coach_bus.glb"
+          test -s "$PWD/build_project/coach_bus.glb"
+          ls -lh "$PWD/build_project/coach_bus.glb"
+
+      - name: Download Godot 4.7.2 and Windows export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          curl -fL "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip" -o godot.zip
+          unzip -q godot.zip
+          GODOT="$(find "$PWD" -maxdepth 1 -type f -name 'Godot_v4.7.2-stable_linux.x86_64*' | head -n1)"
+          chmod +x "$GODOT"
+          echo "GODOT=$GODOT" >> "$GITHUB_ENV"
+
+          curl -fL "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz" -o templates.tpz
+          rm -rf templates_unpacked
+          mkdir templates_unpacked
+          unzip -q templates.tpz -d templates_unpacked
+          TDEST="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$TDEST"
+          find templates_unpacked -type f -name 'windows_*.exe' -exec cp {} "$TDEST/" \;
+          "$GODOT" --version
+
+      - name: Import resources and smoke-test scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT" --headless --editor --path "$PWD/build_project" --quit
+          timeout 12 "$GODOT" --headless --path "$PWD/build_project" --quit-after 3 2>&1 | tee smoke.log || true
+          if grep -E "SCRIPT ERROR|Parse Error|Invalid call|Invalid access" smoke.log; then
+            echo "Runtime smoke test reported a script error."
+            exit 1
+          fi
+
+      - name: Export Windows EXE
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT" --headless --path "$PWD/build_project" --export-release "Windows Desktop" "$PWD/dist/شخصيه الحج والعمره 7.exe"
+          test -s "$PWD/dist/شخصيه الحج والعمره 7.exe"
+          file "$PWD/dist/شخصيه الحج والعمره 7.exe"
+          sha256sum "$PWD/dist/شخصيه الحج والعمره 7.exe"
+
+      - name: Upload Windows game
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shakhsiyat-AlHajj-WalUmrah-7-Windows
+          path: dist/شخصيه الحج والعمره 7.exe
+          if-no-files-found: error
+          compression-level: 0
