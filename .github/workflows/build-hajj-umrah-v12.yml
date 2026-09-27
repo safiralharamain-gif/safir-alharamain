@@ -173,8 +173,8 @@ jobs:
         run: |
           set -euo pipefail
           if ls game-v12/audio/labbayk_*.b64 >/dev/null 2>&1; then
-            cat game-v12/audio/labbayk_*.b64 | base64 -d > build_project/labbayk_umrah.ogg
-            test -s build_project/labbayk_umrah.ogg
+            cat game-v12/audio/labbayk_*.b64 | base64 -d > build_project/labbayk_umrah.mp3
+            test -s build_project/labbayk_umrah.mp3
           else
             echo "Audio chunks not present yet; continuing gait QA."
           fi
