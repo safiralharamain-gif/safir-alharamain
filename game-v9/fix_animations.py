@@ -51,8 +51,8 @@ for side in ("l","r"):
 # the torso. Small X values then create the forward/back swing without reopening the shoulders.
 ARM_DOWN_L=-1.02
 ARM_DOWN_R= 1.02
-ELBOW_L=0.18
-ELBOW_R=0.18
+ELBOW_L=0.0
+ELBOW_R=0.0
 
 def reset_pose():
     for b in pb:
@@ -61,10 +61,10 @@ def reset_pose():
 
 def base_pose():
     d={}
-    if uaL: d[uaL]=(0.04,0.02,ARM_DOWN_L)
-    if uaR: d[uaR]=(0.04,-0.02,ARM_DOWN_R)
-    if faL: d[faL]=(ELBOW_L,0.02,-0.05)
-    if faR: d[faR]=(ELBOW_R,-0.02,0.05)
+    if uaL: d[uaL]=(0.0,0.0,ARM_DOWN_L)
+    if uaR: d[uaR]=(0.0,0.0,ARM_DOWN_R)
+    if faL: d[faL]=(0.0,0.0,0.0)
+    if faR: d[faR]=(0.0,0.0,0.0)
     if clL: d[clL]=(0.0,0.0,-0.04)
     if clR: d[clR]=(0.0,0.0,0.04)
     d.update(finger_pose)
@@ -106,11 +106,11 @@ author("idle",idle)
 # Natural walk: moderate stride, knees bend on recovery, arms counter-swing while remaining down.
 # 32-frame seamless cycle.
 walk_specs=[
-    (1,   0.34,-0.10,-0.20,  -0.34,-0.42, 0.12,  -0.22, 0.22),
-    (9,   0.03,-0.08, 0.02,  -0.05,-0.78, 0.18,  -0.04, 0.04),
-    (17, -0.34,-0.42, 0.12,   0.34,-0.10,-0.20,   0.22,-0.22),
-    (25, -0.05,-0.78, 0.18,   0.03,-0.08, 0.02,   0.04,-0.04),
-    (33,  0.34,-0.10,-0.20,  -0.34,-0.42, 0.12,  -0.22, 0.22),
+    (1,   0.22,-0.08,-0.10,  -0.22,-0.26, 0.08,  0.0,0.0),
+    (9,   0.02,-0.06, 0.00,  -0.03,-0.42, 0.10,  0.0,0.0),
+    (17, -0.22,-0.26, 0.08,   0.22,-0.08,-0.10,  0.0,0.0),
+    (25, -0.03,-0.42, 0.10,   0.02,-0.06, 0.00,  0.0,0.0),
+    (33,  0.22,-0.08,-0.10,  -0.22,-0.26, 0.08,  0.0,0.0),
 ]
 walk=[]
 for fr,rt,rc,rf,lt,lc,lf,asr,asl in walk_specs:
@@ -121,10 +121,10 @@ for fr,rt,rc,rf,lt,lc,lf,asr,asl in walk_specs:
     if thL: ex[thL]=(lt,0,0)
     if caL: ex[caL]=(lc,0,0)
     if foL: ex[foL]=(lf,0,0)
-    if uaR: ex[uaR]=(asr,0.0,ARM_DOWN_R)
-    if uaL: ex[uaL]=(asl,0.0,ARM_DOWN_L)
-    if faR: ex[faR]=(0.24,0,0.05)
-    if faL: ex[faL]=(0.24,0,-0.05)
+    if uaR: ex[uaR]=(0.0,0.0,ARM_DOWN_R)
+    if uaL: ex[uaL]=(0.0,0.0,ARM_DOWN_L)
+    if faR: ex[faR]=(0.0,0.0,0.0)
+    if faL: ex[faL]=(0.0,0.0,0.0)
     if pelvis: ex[pelvis]=(0.02,0,0.025*math.sin((fr-1)/32*math.tau))
     if sp2: ex[sp2]=(0.02,0,0)
     walk.append((fr,blend(B,ex)))
@@ -132,11 +132,11 @@ author("walk",walk)
 
 # Run keeps the same natural arm-down base but bends elbows and increases stride.
 run_specs=[
-    (1,  0.58,-0.25,-0.12, -0.58,-0.72,0.16, -0.38,0.38),
-    (7,  0.06,-0.20, 0.02, -0.10,-1.05,0.20, -0.08,0.08),
-    (13,-0.58,-0.72, 0.16,  0.58,-0.25,-0.12, 0.38,-0.38),
-    (19,-0.10,-1.05, 0.20,  0.06,-0.20,0.02, 0.08,-0.08),
-    (25, 0.58,-0.25,-0.12, -0.58,-0.72,0.16, -0.38,0.38),
+    (1,  0.40,-0.18,-0.08, -0.40,-0.50,0.12, 0.0,0.0),
+    (7,  0.04,-0.15, 0.00, -0.07,-0.70,0.14, 0.0,0.0),
+    (13,-0.40,-0.50, 0.12,  0.40,-0.18,-0.08,0.0,0.0),
+    (19,-0.07,-0.70, 0.14,  0.04,-0.15,0.00,0.0,0.0),
+    (25, 0.40,-0.18,-0.08, -0.40,-0.50,0.12,0.0,0.0),
 ]
 run=[]
 for fr,rt,rc,rf,lt,lc,lf,asr,asl in run_specs:
@@ -147,10 +147,10 @@ for fr,rt,rc,rf,lt,lc,lf,asr,asl in run_specs:
     if thL: ex[thL]=(lt,0,0)
     if caL: ex[caL]=(lc,0,0)
     if foL: ex[foL]=(lf,0,0)
-    if uaR: ex[uaR]=(asr,0,ARM_DOWN_R)
-    if uaL: ex[uaL]=(asl,0,ARM_DOWN_L)
-    if faR: ex[faR]=(0.55,0,0.05)
-    if faL: ex[faL]=(0.55,0,-0.05)
+    if uaR: ex[uaR]=(0.0,0.0,ARM_DOWN_R)
+    if uaL: ex[uaL]=(0.0,0.0,ARM_DOWN_L)
+    if faR: ex[faR]=(0.0,0.0,0.0)
+    if faL: ex[faL]=(0.0,0.0,0.0)
     if sp2: ex[sp2]=(0.10,0,0)
     run.append((fr,blend(B,ex)))
 author("run",run)
