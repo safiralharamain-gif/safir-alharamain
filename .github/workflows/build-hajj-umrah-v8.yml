@@ -1,0 +1,185 @@
+name: Build Hajj Umrah Game V8
+
+on:
+  push:
+    branches:
+      - hajj-umrah-game-v8
+    paths:
+      - "game-v8/**"
+      - ".github/workflows/build-hajj-umrah-v8.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - name: Checkout game branch
+        uses: actions/checkout@v4
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip xz-utils xvfb libgl1 libegl1 libx11-6 libxkbcommon0 libxcursor1 libxinerama1 libxi6 libxrandr2 mesa-vulkan-drivers
+
+      - name: Prepare project
+        run: |
+          rm -rf build_project dist build_tools
+          mkdir -p build_project dist build_tools
+          cp -a game-v8/. build_project/
+
+      - name: Download Blender 4.5 LTS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          BASE="https://download.blender.org/release/Blender4.5/"
+          INDEX="$(curl -fsSL "$BASE")"
+          FILE="$(printf '%s' "$INDEX" | grep -oE 'blender-4\.5\.[0-9]+-linux-x64\.tar\.xz' | sort -V | tail -n1)"
+          test -n "$FILE"
+          curl -fL "${BASE}${FILE}" -o blender.tar.xz
+          tar -xf blender.tar.xz
+          BLENDER="$(find "$PWD" -maxdepth 2 -type f -name blender | head -n1)"
+          chmod +x "$BLENDER"
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+          "$BLENDER" --version | head -n 2
+
+      - name: Download CC0 human assets and natural walk
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          curl -fL "https://files.makehumancommunity.org/plugins/mpfb2-latest.zip" -o mpfb2.zip
+          curl -fL "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip" -o makehuman_assets.zip
+          curl -fL "https://files2.makehumancommunity.org/asset_packs/bodyparts05/bodyparts05_cc0.zip" -o beards.zip
+          mkdir -p makehuman_assets beard_assets
+          unzip -q makehuman_assets.zip -d makehuman_assets
+          unzip -q beards.zip -d beard_assets
+          curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
+          test -s make-human.py
+
+          # Plain CMU walk sequence; avoids the awkward gait from v7.
+          curl -fL "https://github.com/Shriinivas/cmubvh/raw/main/Sequence-001-009/08/Data/08_01.zip" -o walk.zip
+          mkdir -p walk
+          unzip -q walk.zip -d walk
+          WALK_BVH="$(find walk -type f -iname '*.bvh' -print -quit)"
+          test -n "$WALK_BVH"
+          echo "WALK_BVH=$PWD/$WALK_BVH" >> "$GITHUB_ENV"
+
+      - name: Generate male player with short hair and light beard
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          SYS="$ROOT/build_tools/makehuman_assets"
+          BEARDS="$ROOT/build_tools/beard_assets"
+
+          SKIN="$(find "$SYS" -type f -name 'young_caucasian_male.mhmat' -print -quit)"
+          HAIR="$(find "$SYS" -type f -name 'short01.mhclo' -print -quit)"
+          BEARD="$(find "$BEARDS" -type f -iname 'wdg_scruffy_beard.mhclo' -print -quit)"
+          CASUAL="$(find "$SYS" -type f -iname 'male_casualsuit03.mhclo' -print -quit)"
+          if [ -z "$CASUAL" ]; then CASUAL="$(find "$SYS" -type f -iname 'male_casualsuit*.mhclo' -print -quit)"; fi
+          test -n "$SKIN"
+          test -n "$HAIR"
+          test -n "$BEARD"
+          test -n "$CASUAL"
+          echo "HAIR=$HAIR"
+          echo "BEARD=$BEARD"
+          echo "CASUAL=$CASUAL"
+
+          COMMON=("gender=1.0" "age=0.48" "muscle=0.61" "weight=0.51" "height=0.57" "proportions=0.58" "caucasian=0.62" "african=0.28" "asian=0.10" "tex=1024")
+
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- \
+            "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/pilgrim_normal.glb" "$SKIN" \
+            "$HAIR" "$BEARD" "$CASUAL" "$WALK_BVH" "${COMMON[@]}"
+
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- \
+            "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/pilgrim_ihram_raw.glb" "$SKIN" \
+            "$HAIR" "$BEARD" "$WALK_BVH" "${COMMON[@]}"
+
+          ls -lh "$ROOT/build_project/"*.glb
+
+      - name: Skin a real two-piece ihram to the character
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$BLENDER" --background --python "$PWD/game-v8/add_ihram.py" -- \
+            "$PWD/build_project/pilgrim_ihram_raw.glb" "$PWD/build_project/pilgrim_ihram.glb"
+          test -s "$PWD/build_project/pilgrim_ihram.glb"
+          rm -f "$PWD/build_project/pilgrim_ihram_raw.glb"
+          ls -lh "$PWD/build_project/pilgrim_ihram.glb"
+
+      - name: Generate upright fleet and traffic car
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$BLENDER" --background --python "$PWD/game-v8/build_bus.py" -- "$PWD/build_project/coach_bus_safir.glb" safir
+          "$BLENDER" --background --python "$PWD/game-v8/build_bus.py" -- "$PWD/build_project/coach_bus_standard.glb" standard
+          "$BLENDER" --background --python "$PWD/game-v8/build_car.py" -- "$PWD/build_project/traffic_car.glb"
+          test -s "$PWD/build_project/coach_bus_safir.glb"
+          test -s "$PWD/build_project/coach_bus_standard.glb"
+          test -s "$PWD/build_project/traffic_car.glb"
+          ls -lh "$PWD/build_project/"*.glb
+
+      - name: Download Godot 4.7.2 and Windows export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          curl -fL "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip" -o godot.zip
+          unzip -q godot.zip
+          GODOT="$(find "$PWD" -maxdepth 1 -type f -name 'Godot_v4.7.2-stable_linux.x86_64*' | head -n1)"
+          chmod +x "$GODOT"
+          echo "GODOT=$GODOT" >> "$GITHUB_ENV"
+
+          curl -fL "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz" -o templates.tpz
+          rm -rf templates_unpacked
+          mkdir templates_unpacked
+          unzip -q templates.tpz -d templates_unpacked
+          TDEST="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$TDEST"
+          find templates_unpacked -type f -name 'windows_*.exe' -exec cp {} "$TDEST/" \;
+          "$GODOT" --version
+
+      - name: Import and smoke-test scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT" --headless --editor --path "$PWD/build_project" --quit 2>&1 | tee import.log
+          timeout 15 "$GODOT" --headless --path "$PWD/build_project" --quit-after 4 2>&1 | tee smoke.log || true
+          if grep -E "SCRIPT ERROR|Parse Error|Invalid call|Invalid access|ERROR: Failed to load" smoke.log import.log; then
+            echo "Scene validation failed."
+            exit 1
+          fi
+
+      - name: Render automatic visual preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$PWD/build_project/preview.png"
+          timeout 25 env SAFIR_PREVIEW=1 xvfb-run -a "$GODOT" --path "$PWD/build_project" --rendering-method gl_compatibility 2>&1 | tee preview.log || true
+          test -s "$PWD/build_project/preview.png"
+          cp "$PWD/build_project/preview.png" "$PWD/dist/v8-preview.png"
+          ls -lh "$PWD/dist/v8-preview.png"
+
+      - name: Export Windows EXE
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT" --headless --path "$PWD/build_project" --export-release "Windows Desktop" "$PWD/dist/شخصيه الحج والعمره 8.exe"
+          test -s "$PWD/dist/شخصيه الحج والعمره 8.exe"
+          file "$PWD/dist/شخصيه الحج والعمره 8.exe"
+          sha256sum "$PWD/dist/شخصيه الحج والعمره 8.exe"
+
+      - name: Upload Windows game and preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shakhsiyat-AlHajj-WalUmrah-8-Windows
+          path: |
+            dist/شخصيه الحج والعمره 8.exe
+            dist/v8-preview.png
+          if-no-files-found: error
+          compression-level: 0
