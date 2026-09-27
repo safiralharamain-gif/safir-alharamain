@@ -50,8 +50,8 @@ var safir_bus_beacon: OmniLight3D
 
 var wardrobe_pos := Vector3(5.0, 0.0, -3.8)
 var miqat_pos := Vector3(0.0, 0.0, -31.0)
-var bus_pos := Vector3(7.0, 0.0, -49.0)
-var bus_board_pos := Vector3(8.95, 0.0, -54.05)
+var bus_pos := Vector3(7.0, 0.0, -58.0)
+var bus_board_pos := Vector3(8.95, 0.0, -63.05)
 
 var current_clip := ""
 var pulse_t := 0.0
@@ -297,7 +297,7 @@ func _build_world() -> void:
 	_invisible_collider(Vector3(23.8,1.7,-39.0), Vector3(0.45,3.4,56.0))
 	_invisible_collider(Vector3(0,1.7,-66.0), Vector3(48.0,3.4,0.45))
 
-	# Main SAFIR coach — black/gold and deliberately unique among the fleet.
+	# Main SAFIR coach — black/gold, parked fully behind the miqat curb with >5m facade clearance.
 	if ResourceLoader.exists(SAFIR_BUS_GLB):
 		var bus_scene := load(SAFIR_BUS_GLB) as PackedScene
 		safir_bus = bus_scene.instantiate() as Node3D
@@ -546,34 +546,36 @@ func _build_crowd_and_traffic() -> void:
 	# Bus parking apron beyond the miqat complex.
 	var asphalt := _mat(Color("#34373b"),0.94)
 	var line_mat := _mat(Color("#eee3b6"),0.72)
-	_box(Vector3(0,-0.06,-55.0),Vector3(46,0.12,22.0),asphalt,true)
+	_box(Vector3(0,-0.06,-62.0),Vector3(46,0.12,34.0),asphalt,true)
 	for x in [-12.0,-6.0,0.0,6.0,12.0]:
-		_box(Vector3(x,0.02,-51.0),Vector3(0.10,0.012,15.0),line_mat,false)
+		_box(Vector3(x,0.02,-61.0),Vector3(0.10,0.012,27.0),line_mat,false)
 
 	# Modern coach fleet around the miqat parking area.
-	_spawn_bus(Vector3(-11.0,0,-52.0),0.02)
-	_spawn_bus(Vector3(-5.0,0,-52.0),0.01)
-	_spawn_bus(Vector3(1.0,0,-52.0),-0.01)
-	_spawn_bus(Vector3(13.0,0,-52.0),0.02)
-	_spawn_bus(Vector3(-8.0,0,-60.0),PI)
-	_spawn_bus(Vector3(4.0,0,-60.0),PI)
+	_spawn_bus(Vector3(-11.0,0,-58.0),0.02)
+	_spawn_bus(Vector3(-5.0,0,-58.0),0.01)
+	_spawn_bus(Vector3(1.0,0,-58.0),-0.01)
+	_spawn_bus(Vector3(13.0,0,-58.0),0.02)
+	_spawn_bus(Vector3(-11.0,0,-70.0),PI)
+	_spawn_bus(Vector3(-3.0,0,-70.0),PI)
+	_spawn_bus(Vector3(5.0,0,-70.0),PI)
+	_spawn_bus(Vector3(13.0,0,-70.0),PI)
 
 	# Moving cars at the edge of the bus lot.
 	# Cars stay on two dedicated edge lanes in the parking apron; they no longer cross the mosque walls.
-	_spawn_car(Vector3(-20.4,0,-45.0),-1.0,4.4,Color("#233d68"))
-	_spawn_car(Vector3(-18.6,0,-62.0),1.0,4.0,Color("#777b80"))
-	_spawn_car(Vector3(20.4,0,-48.0),-1.0,4.7,Color("#7b2525"))
-	_spawn_car(Vector3(18.6,0,-60.0),1.0,3.9,Color("#d2ccc0"))
+	_spawn_car(Vector3(-20.4,0,-54.0),-1.0,4.4,Color("#233d68"))
+	_spawn_car(Vector3(-18.6,0,-76.0),1.0,4.0,Color("#777b80"))
+	_spawn_car(Vector3(20.4,0,-58.0),-1.0,4.7,Color("#7b2525"))
+	_spawn_car(Vector3(18.6,0,-72.0),1.0,3.9,Color("#d2ccc0"))
 
 	var board_pt := bus_board_pos
 
 	# Boarding queue at the user's black/gold SAFIR coach.
 	_spawn_npc(NPC_OLDER_IHRAM,Vector3(2.0,0,-39.0),
-		[Vector3(3.0,0,-44.0),Vector3(5.0,0,-49.0),board_pt],0.95,1.00,0.0,true)
+		[Vector3(1.0,0,-44.0),Vector3(0.0,0,-48.5),Vector3(4.5,0,-54.0),board_pt],0.95,1.00,0.0,true)
 	_spawn_npc(NPC_DARK_IHRAM,Vector3(-1.0,0,-38.0),
-		[Vector3(1.0,0,-44.0),Vector3(4.0,0,-49.5),board_pt+Vector3(0,0,0.8)],1.02,1.03,1.8,true)
+		[Vector3(0.0,0,-44.0),Vector3(0.0,0,-48.5),Vector3(4.0,0,-54.5),board_pt+Vector3(0,0,0.8)],1.02,1.03,1.8,true)
 	_spawn_npc(NPC_YOUNG_NORMAL,Vector3(4.0,0,-37.0),
-		[Vector3(4.5,0,-43.0),Vector3(6.0,0,-49.0),board_pt+Vector3(0,0,1.45)],1.05,0.96,3.3,true)
+		[Vector3(1.0,0,-44.0),Vector3(0.0,0,-48.5),Vector3(5.0,0,-55.0),board_pt+Vector3(0,0,1.45)],1.05,0.96,3.3,true)
 
 	# People moving through the palm-lined courtyard and arcades.
 	_spawn_npc(NPC_STOCKY_NORMAL,Vector3(-7.5,0,-25.0),
@@ -645,10 +647,10 @@ func _update_lively_world(delta: float) -> void:
 		var car: Node3D = info["node"]
 		var d: float = info["dir"]
 		car.position.z += d * float(info["speed"]) * delta
-		if d < 0.0 and car.position.z < -64.0:
-			car.position.z = -44.0
-		elif d > 0.0 and car.position.z > -44.0:
-			car.position.z = -64.0
+		if d < 0.0 and car.position.z < -79.0:
+			car.position.z = -52.0
+		elif d > 0.0 and car.position.z > -52.0:
+			car.position.z = -79.0
 
 
 func _setup_preview() -> void:
