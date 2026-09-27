@@ -1,6 +1,6 @@
 extends Node3D
 
-# SAFIR Hajj & Umrah Training — high-fidelity character prototype v6.
+# SAFIR Hajj & Umrah Training — V12 real-mocap movement and moving coach.
 # The male character GLBs are generated in CI from MakeHuman/MPFB CC0 assets.
 
 const NORMAL_GLB := "res://pilgrim_normal.glb"
