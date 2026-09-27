@@ -155,14 +155,12 @@ jobs:
             exit 1
           fi
 
-      - name: Render automatic visual preview
+      - name: Render Blender QA preview
         shell: bash
         run: |
           set -euo pipefail
-          rm -f "$PWD/build_project/preview.png"
-          timeout 25 env SAFIR_PREVIEW=1 SAFIR_PREVIEW_PATH="$PWD/build_project/preview.png" xvfb-run -a "$GODOT" --path "$PWD/build_project" --rendering-method gl_compatibility 2>&1 | tee preview.log || true
-          test -s "$PWD/build_project/preview.png"
-          cp "$PWD/build_project/preview.png" "$PWD/dist/v8-preview.png"
+          "$BLENDER" --background --python "$PWD/game-v8/render_preview.py" --             "$PWD/build_project/pilgrim_ihram.glb"             "$PWD/build_project/coach_bus_safir.glb"             "$PWD/build_project/coach_bus_standard.glb"             "$PWD/dist/v8-preview.png"
+          test -s "$PWD/dist/v8-preview.png"
           ls -lh "$PWD/dist/v8-preview.png"
 
       - name: Export Windows EXE
