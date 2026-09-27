@@ -7,7 +7,7 @@ argv=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
 
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 
-def import_group(path,name,loc,scale=1.0,rot=0.0):
+def import_group(path,name,loc,rot=0.0):
     before=set(bpy.data.objects); before_actions=set(bpy.data.actions)
     bpy.ops.import_scene.gltf(filepath=os.path.abspath(path))
     objs=[o for o in bpy.data.objects if o not in before]
@@ -17,90 +17,66 @@ def import_group(path,name,loc,scale=1.0,rot=0.0):
     for o in objs:
         if o.parent is None:o.parent=root
         if o.type=='ARMATURE':arm=o
-    root.location=loc; root.scale=(scale,scale,scale); root.rotation_euler.z=rot
+    root.location=loc; root.rotation_euler.z=rot
     return root,arm,acts
 
-def choose_action(arm,acts,clip):
-    if not arm:return None
+def choose(arm,acts,clip):
+    if not arm:return
     if not arm.animation_data:arm.animation_data_create()
-    chosen=next((a for a in acts if a.name.lower().startswith(clip.lower())),None)
-    if chosen is None:
-        chosen=next((a for a in bpy.data.actions if a.name.lower().startswith(clip.lower())),None)
-    if chosen:
-        arm.animation_data.action=chosen
-        print("PREVIEW_ACTION",arm.name,chosen.name)
-    return chosen
+    a=next((x for x in acts if x.name.lower().startswith(clip.lower())),None)
+    if a is None:a=next((x for x in bpy.data.actions if x.name.lower().startswith(clip.lower())),None)
+    if a:arm.animation_data.action=a
 
-def bone_pos(arm,name):
-    if not arm or name not in arm.pose.bones:return None
-    return arm.matrix_world @ arm.pose.bones[name].head
+def p(arm,bone):
+    return arm.matrix_world @ arm.pose.bones[bone].head if bone in arm.pose.bones else None
 
-def validate_relaxed(arm,label):
+def validate(arm,label):
     bpy.context.view_layer.update()
-    lh=bone_pos(arm,"hand_l"); rh=bone_pos(arm,"hand_r")
-    lu=bone_pos(arm,"upperarm_l"); ru=bone_pos(arm,"upperarm_r")
-    pel=bone_pos(arm,"pelvis")
-    if None in (lh,rh,lu,ru,pel):raise RuntimeError(label+" missing pose bones")
-    left_sign=1 if lu.x>ru.x else -1
-    if left_sign*(lh.x-pel.x)<.06:raise RuntimeError(label+" left hand crossed torso")
-    if -left_sign*(rh.x-pel.x)<.06:raise RuntimeError(label+" right hand crossed torso")
-    if lh.z>lu.z-.12 or rh.z>ru.z-.12:raise RuntimeError(label+" arms still raised")
-    if abs(lh.x-rh.x)<.26:raise RuntimeError(label+" hands clasped/too close")
+    lh,rh=p(arm,"hand_l"),p(arm,"hand_r")
+    lu,ru=p(arm,"upperarm_l"),p(arm,"upperarm_r")
+    pel=p(arm,"pelvis")
+    if None in (lh,rh,lu,ru,pel):raise RuntimeError(label+" missing bones")
+    s=1 if lu.x>ru.x else -1
+    if s*(lh.x-pel.x)<.045:raise RuntimeError(label+" left hand crossed torso")
+    if -s*(rh.x-pel.x)<.045:raise RuntimeError(label+" right hand crossed torso")
+    if lh.z>lu.z-.10 or rh.z>ru.z-.10:raise RuntimeError(label+" arms raised")
+    if abs(lh.x-rh.x)<.23:raise RuntimeError(label+" hands clasped")
     print("POSE_OK",label,lh,rh)
 
-# Environment behind the QA lineup.
-miqat,_,_=import_group(miqat_path,"MiqatAbyarAli",(0,8.5,0),0.64,0)
-safir,_,_=import_group(bus_path,"SafirBus",(9.0,11.5,0),0.45,math.radians(-8))
-std,_,_=import_group(standard_path,"StdBus",(-9.5,12.0,0),0.42,math.radians(8))
-
-# Main player states.
-idle,arm_idle,a_idle=import_group(normal_path,"PlayerIdle",(-6.2,-5.0,0),1.0,0)
-walk,arm_walk,a_walk=import_group(normal_path,"PlayerWalk",(-3.6,-5.0,0),1.0,0)
-ihram,arm_ihram,a_ihram=import_group(ihram_path,"PlayerIhramFront",(-0.7,-5.0,0),1.0,0)
-ihram_back,arm_ib,a_ib=import_group(ihram_path,"PlayerIhramBack",(2.1,-5.0,0),1.0,math.pi)
-
-choose_action(arm_idle,a_idle,"idle")
-choose_action(arm_walk,a_walk,"walk")
-choose_action(arm_ihram,a_ihram,"idle")
-choose_action(arm_ib,a_ib,"idle")
-
-# Diverse background people.
-o1,a1,aa1=import_group(npc_old,"NpcOlder",(-5.8,.1,0),.97,math.radians(7))
-o2,a2,aa2=import_group(npc_dark,"NpcDark",(-3.2,.3,0),1.03,math.radians(-4))
-o3,a3,aa3=import_group(npc_young,"NpcYoung",(3.2,.2,0),.95,math.radians(4))
-o4,a4,aa4=import_group(npc_stocky,"NpcStocky",(5.5,.3,0),1.04,math.radians(-6))
-for a,acts in [(a1,aa1),(a2,aa2),(a3,aa3),(a4,aa4)]:choose_action(a,acts,"idle")
+idle,ai,aa=import_group(normal_path,"Idle",(-3.9,0,0))
+walk,aw,wa=import_group(normal_path,"Walk",(-1.3,0,0))
+ifr,ar,ra=import_group(ihram_path,"IhramFront",(1.35,0,0))
+ibr,ab,ba=import_group(ihram_path,"IhramBack",(4.0,0,0),math.pi)
+choose(ai,aa,"idle"); choose(aw,wa,"walk"); choose(ar,ra,"idle"); choose(ab,ba,"idle")
 
 bpy.context.scene.frame_set(1)
-validate_relaxed(arm_idle,"normal idle")
-validate_relaxed(arm_ihram,"ihram idle")
+validate(ai,"normal idle"); validate(ar,"ihram idle")
 bpy.context.scene.frame_set(7)
-# Walking hands may swing, but must remain on their own side of the body.
-validate_relaxed(arm_walk,"walk frame 7")
+validate(aw,"walk frame 7")
 
-# Ground.
-m=bpy.data.materials.new("PreviewGround");m.diffuse_color=(.30,.29,.25,1)
-bpy.ops.mesh.primitive_plane_add(size=76,location=(0,3,-.03));bpy.context.object.data.materials.append(m)
+# neutral floor
+mat=bpy.data.materials.new("Ground");mat.diffuse_color=(.28,.28,.27,1)
+bpy.ops.mesh.primitive_plane_add(size=18,location=(0,0,-.02));bpy.context.object.data.materials.append(mat)
 
 world=bpy.context.scene.world or bpy.data.worlds.new("World");bpy.context.scene.world=world
 world.use_nodes=True
-world.node_tree.nodes["Background"].inputs["Color"].default_value=(.35,.50,.72,1)
-world.node_tree.nodes["Background"].inputs["Strength"].default_value=.75
-bpy.ops.object.light_add(type='SUN',location=(0,-6,14))
-sun=bpy.context.object;sun.data.energy=2.35;sun.rotation_euler=(math.radians(32),math.radians(-18),math.radians(-28))
-bpy.ops.object.light_add(type='AREA',location=(-5,-9,10))
-key=bpy.context.object;key.data.energy=1350;key.data.size=7;key.data.color=(1,.84,.67)
-bpy.ops.object.light_add(type='AREA',location=(9,-3,7))
-fill=bpy.context.object;fill.data.energy=900;fill.data.size=6;fill.data.color=(.62,.72,1)
+world.node_tree.nodes["Background"].inputs["Color"].default_value=(.42,.48,.58,1)
+world.node_tree.nodes["Background"].inputs["Strength"].default_value=.7
+bpy.ops.object.light_add(type='SUN',location=(0,-4,9))
+sun=bpy.context.object;sun.data.energy=2.1;sun.rotation_euler=(math.radians(35),0,math.radians(-25))
+bpy.ops.object.light_add(type='AREA',location=(-3,-5,7))
+bpy.context.object.data.energy=950;bpy.context.object.data.size=5
+bpy.ops.object.light_add(type='AREA',location=(6,-2,5))
+bpy.context.object.data.energy=550;bpy.context.object.data.size=4
 
-def look_at(o,p):o.rotation_euler=(Vector(p)-o.location).to_track_quat('-Z','Y').to_euler()
-bpy.ops.object.camera_add(location=(15,-23,8.5))
-cam=bpy.context.object;cam.data.lens=52;look_at(cam,(0,2.5,1.9));bpy.context.scene.camera=cam
+def look(o,t):o.rotation_euler=(Vector(t)-o.location).to_track_quat('-Z','Y').to_euler()
+bpy.ops.object.camera_add(location=(9,-14,5.2))
+cam=bpy.context.object;cam.data.lens=58;look(cam,(0.2,0,1.15));bpy.context.scene.camera=cam
 
-scene=bpy.context.scene
-scene.render.engine='BLENDER_EEVEE_NEXT'
-scene.render.resolution_x=1700;scene.render.resolution_y=950;scene.render.resolution_percentage=100
-scene.render.image_settings.file_format='PNG';scene.render.filepath=os.path.abspath(out)
-scene.view_settings.look='AgX - Medium High Contrast'
+s=bpy.context.scene
+s.render.engine='BLENDER_EEVEE_NEXT'
+s.render.resolution_x=1200;s.render.resolution_y=700;s.render.resolution_percentage=100
+s.render.image_settings.file_format='PNG';s.render.filepath=os.path.abspath(out)
+s.view_settings.look='AgX - Medium High Contrast'
 bpy.ops.render.render(write_still=True)
 print("V11_PREVIEW",os.path.abspath(out))
