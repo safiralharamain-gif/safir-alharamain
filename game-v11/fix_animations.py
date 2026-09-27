@@ -128,84 +128,143 @@ if finger_axes:
             pb[n].keyframe_insert("rotation_euler",frame=fr)
     arm.animation_data.action=None
 
-# ---------- official MakeHuman walk1.bvh ----------
-before=set(bpy.data.objects)
-bpy.ops.import_anim.bvh(filepath=os.path.abspath(walk_bvh),axis_forward='-Z',axis_up='Y',use_fps_scale=False)
-src_arm=next(o for o in bpy.data.objects if o not in before and o.type=='ARMATURE')
-raw_action=src_arm.animation_data.action if src_arm.animation_data else None
-srcpb=src_arm.pose.bones
 
-MAP={
-    "pelvis":"Hips",
-    "spine_01":"Spine1","spine_02":"Spine2","spine_03":"Spine3",
-    "neck_01":"Neck","head":"Head",
-    "clavicle_l":"Clavicle_L","upperarm_l":"UpArm_L","lowerarm_l":"LoArm_L","hand_l":"Hand_L",
-    "clavicle_r":"Clavicle_R","upperarm_r":"UpArm_R","lowerarm_r":"LoArm_R","hand_r":"Hand_R",
-    "thigh_l":"UpLeg_L","calf_l":"LoLeg_L","foot_l":"Foot_L","ball_l":"Toe_L",
-    "thigh_r":"UpLeg_R","calf_r":"LoLeg_R","foot_r":"Foot_R","ball_r":"Toe_R",
-}
-# Finger mapping removes the malformed palm/finger look during motion.
-for side_t,side_s in (("l","L"),("r","R")):
-    for f_t,f_s in (("thumb","Thumb"),("index","Index"),("middle","Middle"),("ring","Ring"),("pinky","Pinky")):
-        for i in (1,2,3):
-            MAP[f"{f_t}_{i:02d}_{side_t}"]=f"{f_s}{i}_{side_s}"
+# ---------- clean procedural walk/run on THIS exact rig ----------
+# No BVH retargeting: targets stay in the character's own skeleton space, eliminating sideways lean.
 
-pairs={tb:sb for tb,sb in MAP.items() if tb in pb and sb in srcpb}
-print("V11 WALK mapped",len(pairs),"bones")
+def pose_world(v):
+    return arm.matrix_world @ Vector(v)
 
-def depth(db):
-    d=0
-    while db.parent:
-        db=db.parent; d+=1
-    return d
+# Arm targets are further from the thighs than V10/V11 initial attempts.
+base_hand_x=leg_half + H*.145
+base_hand_z=hip_z-H*.165
+base_hand_y=-H*.015
 
-tgt_rest={tb:arm.data.bones[tb].matrix_local.to_3x3() for tb in pairs}
-src_rest={tb:src_arm.data.bones[sb].matrix_local.to_3x3() for tb,sb in pairs.items()}
-order=sorted(pairs,key=lambda b:depth(arm.data.bones[b]))
+# Foot rest positions from the actual skeleton.
+footL_rest=bones[caL].tail_local.copy()
+footR_rest=bones[caR].tail_local.copy()
+knee_z=(bones[thL].tail_local.z+bones[thR].tail_local.z)*.5
 
-walk=bpy.data.actions.new("walk")
-arm.animation_data.action=walk
-for b in pb:
-    b.rotation_mode='QUATERNION'
+def make_targets(prefix):
+    hL=empty(prefix+"_hand_L",(left_sign*base_hand_x,base_hand_y,base_hand_z))
+    hR=empty(prefix+"_hand_R",(right_sign*base_hand_x,base_hand_y,base_hand_z))
+    eL=empty(prefix+"_elbow_L",(left_sign*(base_hand_x+H*.16),-H*.10,shoulder_z-H*.12))
+    eR=empty(prefix+"_elbow_R",(right_sign*(base_hand_x+H*.16),-H*.10,shoulder_z-H*.12))
+    fL=empty(prefix+"_foot_L",footL_rest)
+    fR=empty(prefix+"_foot_R",footR_rest)
+    kL=empty(prefix+"_knee_L",(bones[thL].head_local.x,-H*.42,knee_z))
+    kR=empty(prefix+"_knee_R",(bones[thR].head_local.x,-H*.42,knee_z))
+    add_ik(laL,hL,eL); add_ik(laR,hR,eR)
+    add_ik(caL,fL,kL); add_ik(caR,fR,kR)
+    return [hL,hR,eL,eR,fL,fR,kL,kR]
 
-# walk1.bvh is a native MakeHuman 14-frame in-place cycle.
-for f in range(1,15):
-    bpy.context.scene.frame_set(f)
-    se=src_arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
-    for tb in order:
-        src_pose=se.pose.bones[pairs[tb]]
-        Rw=src_pose.matrix.to_3x3() @ src_rest[tb].inverted() @ tgt_rest[tb]
-        p=pb[tb]
-        p.matrix=Matrix.Translation(p.matrix.to_translation()) @ Rw.to_4x4()
-        bpy.context.view_layer.update()
-        p.rotation_mode='QUATERNION'
-        p.keyframe_insert("rotation_quaternion",frame=f)
+def bake_motion(name,end_frame,stride,lift,hand_swing,run=False):
+    # reset all rotations/locations before creating targets
+    for b in pb:
+        b.rotation_mode='QUATERNION'
+        b.rotation_quaternion=(1,0,0,0)
+        b.location=(0,0,0)
+        b.scale=(1,1,1)
 
-# Keep all translation/root motion out: the Godot CharacterBody drives movement.
-if pelvis in pb:
-    p=pb[pelvis]
-    p.location=(0,0,0)
-    for f in range(1,15):
-        p.keyframe_insert("location",frame=f)
+    targets=make_targets(name)
+    hL,hR,eL,eR,fL,fR,kL,kR=targets
 
-walk.use_fake_user=True
-arm.animation_data.action=None
+    action=bpy.data.actions.new(name)
+    arm.animation_data_create().action=action
 
-# Remove imported source rig + its raw action.
-bpy.data.objects.remove(src_arm,do_unlink=True)
-if raw_action:
-    try:bpy.data.actions.remove(raw_action)
-    except:pass
+    # Seamless four-phase cycle: contact -> pass -> opposite contact -> pass -> contact.
+    phases=[(1,1.0),(1+end_frame//4,0.0),(1+end_frame//2,-1.0),
+            (1+3*end_frame//4,0.0),(1+end_frame,1.0)]
+    for fr,p in phases:
+        # feet move ONLY along local Y (forward/back), never sideways
+        l=footL_rest.copy(); r=footR_rest.copy()
+        l.y += -stride*p
+        r.y += stride*p
+        # lift swing foot during pass phases
+        if abs(p)<0.01:
+            if fr < 1+end_frame//2:
+                r.z += lift
+                r.y -= stride*.12
+            else:
+                l.z += lift
+                l.y -= stride*.12
+        key_loc(fL,fr,l); key_loc(fR,fr,r)
 
-# Duplicate walk as a named run fallback. Godot V11 uses walk sped up for running.
-run=walk.copy(); run.name="run"; run.use_fake_user=True
+        # hands stay outside thighs, counter-swing gently along Y
+        key_loc(hL,fr,(left_sign*base_hand_x,base_hand_y+hand_swing*p,base_hand_z))
+        key_loc(hR,fr,(right_sign*base_hand_x,base_hand_y-hand_swing*p,base_hand_z))
 
-# NLA tracks keep all clips attached to this armature for deterministic glTF export.
+        # knee poles remain straight forward and slightly outward
+        key_loc(kL,fr,(bones[thL].head_local.x,-H*.42,knee_z))
+        key_loc(kR,fr,(bones[thR].head_local.x,-H*.42,knee_z))
+
+    # Keep torso vertical; only tiny forward pitch for run, no roll/yaw.
+    if sp2:
+        pb[sp2].rotation_mode='XYZ'
+        for fr in [1,1+end_frame//2,1+end_frame]:
+            pb[sp2].rotation_euler=(0.035 if run else 0.012,0,0)
+            pb[sp2].keyframe_insert("rotation_euler",frame=fr)
+
+    # Keep pelvis centered: no lateral roll at all.
+    if pelvis:
+        pb[pelvis].rotation_mode='XYZ'
+        for fr in [1,1+end_frame//2,1+end_frame]:
+            pb[pelvis].rotation_euler=(0,0,0)
+            pb[pelvis].keyframe_insert("rotation_euler",frame=fr)
+            pb[pelvis].location=(0,0,0)
+            pb[pelvis].keyframe_insert("location",frame=fr)
+
+    bpy.context.view_layer.objects.active=arm
+    arm.select_set(True)
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.nla.bake(frame_start=1,frame_end=1+end_frame,step=1,only_selected=False,
+                     visual_keying=True,clear_constraints=True,clear_parents=False,
+                     use_current_action=True,bake_types={'POSE'})
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    baked=arm.animation_data.action
+    baked.name=name
+    baked.use_fake_user=True
+
+    # Relax all fingers in every clip and hold wrists neutral.
+    for fr in [1,1+end_frame//4,1+end_frame//2,1+3*end_frame//4,1+end_frame]:
+        for side in ("l","r"):
+            for fng in ("index","middle","ring","pinky"):
+                for seg,amt in (("01",-0.12),("02",-0.24),("03",-0.18)):
+                    n=f"{fng}_{seg}_{side}"
+                    if n in pb:
+                        pb[n].rotation_mode='XYZ'
+                        pb[n].rotation_euler=(0,0,amt)
+                        pb[n].keyframe_insert("rotation_euler",frame=fr)
+            hn="hand_"+side
+            if hn in pb:
+                pb[hn].rotation_mode='XYZ'
+                pb[hn].rotation_euler=(0,0,0)
+                pb[hn].keyframe_insert("rotation_euler",frame=fr)
+
+    arm.animation_data.action=None
+    for o in targets:
+        if o and o.name in bpy.data.objects:
+            bpy.data.objects.remove(o,do_unlink=True)
+    return baked
+
+walk=bake_motion("walk",32,H*.095,H*.038,H*.050,False)
+run=bake_motion("run",24,H*.145,H*.060,H*.080,True)
+
+# NLA tracks keep all three clips attached for deterministic glTF export.
 for act in (idle,walk,run):
-    tr=arm.animation_data.nla_tracks.new(); tr.name=act.name
+    tr=arm.animation_data.nla_tracks.new()
+    tr.name=act.name
     st=tr.strips.new(act.name,1,act)
     st.action_frame_start=act.frame_range[0]
     st.action_frame_end=act.frame_range[1]
+
+# Clean rest frame before export.
+for b in pb:
+    b.rotation_mode='QUATERNION'
+    b.rotation_quaternion=(1,0,0,0)
+    b.location=(0,0,0)
+    b.scale=(1,1,1)
 
 bpy.context.scene.frame_start=1
 bpy.context.scene.frame_end=60
@@ -213,4 +272,4 @@ bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.abspath(out),export_format='GLB',
     export_animations=True,export_animation_mode='ACTIONS',export_yup=True,
     export_materials='EXPORT',export_apply=False)
-print("V11_MOTION_DONE",os.path.abspath(out))
+print("V11_PROCEDURAL_ANIMATED",os.path.abspath(out))
