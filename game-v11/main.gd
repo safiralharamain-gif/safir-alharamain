@@ -854,7 +854,7 @@ func _physics_process(delta: float) -> void:
 	# Hard safety net: if physics ever drops the player below the decorative scene or outside
 	# the training compound, return to the last valid position instead of falling into space.
 	var gp := player.global_position
-	var valid := gp.y > -1.5 and abs(gp.x) < 23.2 and gp.z > -65.5 and gp.z < 9.0
+	var valid: bool = gp.y > -1.5 and abs(gp.x) < 23.2 and gp.z > -65.5 and gp.z < 9.0
 	if valid:
 		last_safe_position = gp
 	else:
