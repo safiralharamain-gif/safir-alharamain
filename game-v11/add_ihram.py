@@ -127,7 +127,7 @@ for j in range(rings-1):
         faces.append((a,b,c,d))
 me=bpy.data.meshes.new("IhramIzarMesh"); me.from_pydata(verts,[],faces); me.update()
 izar=bpy.data.objects.new("Ihram_Izar",me); bpy.context.collection.objects.link(izar)
-add_modifiers(izar); transfer_weights(izar)
+transfer_weights(izar); add_modifiers(izar)
 
 # Overlap flap very close to the front of the izar.
 rxw,ryw=cross_extents(waist-H*.03)
@@ -137,7 +137,7 @@ verts=[(-fw,front_y,ankle+H*.035),(fw,front_y,ankle+H*.035),
        (fw*.86,front_y-H*.004,waist-H*.018),(-fw*.86,front_y-H*.004,waist-H*.018)]
 me=bpy.data.meshes.new("IhramIzarOverlapMesh"); me.from_pydata(verts,[],[(0,1,2,3)]); me.update()
 flap=bpy.data.objects.new("Ihram_Izar_Overlap",me); bpy.context.collection.objects.link(flap)
-add_modifiers(flap); transfer_weights(flap)
+transfer_weights(flap); add_modifiers(flap)
 
 # ---------------- upper RIDA: diagonal body-hugging drape ----------------
 # Reference: left shoulder covered, right shoulder bare. Front/back surfaces use live torso depth.
@@ -167,7 +167,7 @@ def make_drape(name,front=True):
             faces.append((a,b,c,d))
     me=bpy.data.meshes.new(name+"Mesh"); me.from_pydata(verts,[],faces); me.update()
     o=bpy.data.objects.new(name,me); bpy.context.collection.objects.link(o)
-    add_modifiers(o); transfer_weights(o)
+    transfer_weights(o); add_modifiers(o)
     return o
 
 front=make_drape("Ihram_Rida_Front",True)
@@ -192,7 +192,7 @@ for j in range(rows2-1):
         faces.append((a,b,c,d))
 me=bpy.data.meshes.new("IhramShoulderBridgeMesh"); me.from_pydata(verts,[],faces); me.update()
 bridge=bpy.data.objects.new("Ihram_Rida_Shoulder",me); bpy.context.collection.objects.link(bridge)
-add_modifiers(bridge); transfer_weights(bridge)
+transfer_weights(bridge); add_modifiers(bridge)
 
 # Hanging loose edge down the covered side, like the photo reference.
 verts=[]; faces=[]; rr=12; cc=5
@@ -211,7 +211,7 @@ for j in range(rr-1):
         faces.append((a,b,c,d))
 me=bpy.data.meshes.new("IhramLooseEdgeMesh"); me.from_pydata(verts,[],faces); me.update()
 loose=bpy.data.objects.new("Ihram_Rida_LooseEdge",me); bpy.context.collection.objects.link(loose)
-add_modifiers(loose); transfer_weights(loose)
+transfer_weights(loose); add_modifiers(loose)
 
 # Validate garment distance: reject an absurdly oversized ihram.
 garments=[izar,flap,front,back,bridge,loose]
