@@ -1,0 +1,213 @@
+name: Build Hajj Umrah Game V10
+
+on:
+  push:
+    branches:
+      - hajj-umrah-game-v10
+    paths:
+      - "game-v10/**"
+      - ".github/workflows/build-hajj-umrah-v10.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - name: Checkout game branch
+        uses: actions/checkout@v4
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip xz-utils libgl1 libegl1 libx11-6 libxkbcommon0 libxcursor1 libxinerama1 libxi6 libxrandr2
+
+      - name: Prepare project
+        run: |
+          rm -rf build_project dist build_tools
+          mkdir -p build_project dist build_tools
+          cp -a game-v10/. build_project/
+
+      - name: Download Blender 4.5 LTS
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          BASE="https://download.blender.org/release/Blender4.5/"
+          INDEX="$(curl -fsSL "$BASE")"
+          FILE="$(printf '%s' "$INDEX" | grep -oE 'blender-4\.5\.[0-9]+-linux-x64\.tar\.xz' | sort -V | tail -n1)"
+          test -n "$FILE"
+          curl -fL "${BASE}${FILE}" -o blender.tar.xz
+          tar -xf blender.tar.xz
+          BLENDER="$(find "$PWD" -maxdepth 2 -type f -name blender | head -n1)"
+          chmod +x "$BLENDER"
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+          "$BLENDER" --version | head -n2
+
+      - name: Download CC0 MakeHuman assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          curl -fL "https://files.makehumancommunity.org/plugins/mpfb2-latest.zip" -o mpfb2.zip
+          curl -fL "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip" -o makehuman_assets.zip
+          curl -fL "https://files2.makehumancommunity.org/asset_packs/bodyparts05/bodyparts05_cc0.zip" -o beards.zip
+          mkdir -p makehuman_assets beard_assets
+          unzip -q makehuman_assets.zip -d makehuman_assets
+          unzip -q beards.zip -d beard_assets
+          curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
+          test -s make-human.py
+
+      - name: Resolve human assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          SYS="$PWD/build_tools/makehuman_assets"
+          BEARDS="$PWD/build_tools/beard_assets"
+          BASE_SKIN="$(find "$SYS" -type f -name 'young_caucasian_male.mhmat' -print -quit)"
+          OLD_SKIN="$(find "$SYS" -type f -iname '*.mhmat' | grep -Ei '(old|middle).*(male)|male.*(old|middle)' | head -n1 || true)"
+          DARK_SKIN="$(find "$SYS" -type f -iname '*.mhmat' | grep -Ei 'african.*male|male.*african' | head -n1 || true)"
+          ASIAN_SKIN="$(find "$SYS" -type f -iname '*.mhmat' | grep -Ei 'asian.*male|male.*asian' | head -n1 || true)"
+          [ -n "$OLD_SKIN" ] || OLD_SKIN="$BASE_SKIN"
+          [ -n "$DARK_SKIN" ] || DARK_SKIN="$BASE_SKIN"
+          [ -n "$ASIAN_SKIN" ] || ASIAN_SKIN="$BASE_SKIN"
+          H1="$(find "$SYS" -type f -name 'short01.mhclo' -print -quit)"
+          H2="$(find "$SYS" -type f -name 'short02.mhclo' -print -quit)"
+          H3="$(find "$SYS" -type f -name 'short03.mhclo' -print -quit)"
+          [ -n "$H2" ] || H2="$H1"
+          [ -n "$H3" ] || H3="$H1"
+          BEARD="$(find "$BEARDS" -type f -iname 'wdg_scruffy_beard.mhclo' -print -quit)"
+          [ -n "$BEARD" ] || BEARD="$(find "$BEARDS" -type f -iname '*beard*.mhclo' -print -quit)"
+          C1="$(find "$SYS" -type f -iname 'male_casualsuit01.mhclo' -print -quit)"
+          C2="$(find "$SYS" -type f -iname 'male_casualsuit02.mhclo' -print -quit)"
+          C3="$(find "$SYS" -type f -iname 'male_casualsuit03.mhclo' -print -quit)"
+          [ -n "$C1" ] || C1="$C3"
+          [ -n "$C2" ] || C2="$C3"
+          test -n "$BASE_SKIN"; test -n "$H1"; test -n "$BEARD"; test -n "$C3"
+          {
+            echo "BASE_SKIN=$BASE_SKIN"; echo "OLD_SKIN=$OLD_SKIN"; echo "DARK_SKIN=$DARK_SKIN"; echo "ASIAN_SKIN=$ASIAN_SKIN"
+            echo "H1=$H1"; echo "H2=$H2"; echo "H3=$H3"; echo "BEARD=$BEARD"
+            echo "C1=$C1"; echo "C2=$C2"; echo "C3=$C3"
+          } >> "$GITHUB_ENV"
+
+      - name: Generate independent player characters
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          COMMON=("gender=1.0" "age=0.47" "muscle=0.58" "weight=0.50" "height=0.56" "proportions=0.57" "caucasian=0.64" "african=0.26" "asian=0.10" "tex=1024")
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/player_normal_raw.glb" "$BASE_SKIN" "$H1" "$BEARD" "$C3" "${COMMON[@]}"
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/player_ihram_raw.glb" "$BASE_SKIN" "$H1" "$BEARD" "${COMMON[@]}"
+
+      - name: Generate four different NPC characters
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/npc_older_raw.glb" "$OLD_SKIN" "$H3" "$BEARD" gender=1.0 age=0.72 muscle=0.40 weight=0.45 height=0.60 proportions=0.55 caucasian=0.72 african=0.20 asian=0.08 tex=768
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/npc_dark_raw.glb" "$DARK_SKIN" "$H2" gender=1.0 age=0.50 muscle=0.64 weight=0.56 height=0.59 proportions=0.62 caucasian=0.14 african=0.78 asian=0.08 tex=768
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/npc_young_raw.glb" "$ASIAN_SKIN" "$H1" "$C1" gender=1.0 age=0.34 muscle=0.43 weight=0.40 height=0.49 proportions=0.50 caucasian=0.25 african=0.08 asian=0.67 tex=768
+          "$BLENDER" --background --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/npc_stocky_raw.glb" "$BASE_SKIN" "$H3" "$C2" gender=1.0 age=0.58 muscle=0.46 weight=0.74 height=0.52 proportions=0.48 caucasian=0.62 african=0.27 asian=0.11 tex=768
+
+      - name: Bake IK locomotion on every rig
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          for name in player_normal player_ihram npc_older npc_dark npc_young npc_stocky; do
+            "$BLENDER" --background --python "$ROOT/game-v10/fix_animations.py" -- "$ROOT/build_project/${name}_raw.glb" "$ROOT/build_project/${name}_fixed.glb"
+          done
+
+      - name: Dress dedicated ihram character and pilgrim NPCs
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          "$BLENDER" --background --python "$ROOT/game-v10/add_ihram.py" -- "$ROOT/build_project/player_ihram_fixed.glb" "$ROOT/build_project/pilgrim_ihram.glb"
+          "$BLENDER" --background --python "$ROOT/game-v10/add_ihram.py" -- "$ROOT/build_project/npc_older_fixed.glb" "$ROOT/build_project/npc_older_ihram.glb"
+          "$BLENDER" --background --python "$ROOT/game-v10/add_ihram.py" -- "$ROOT/build_project/npc_dark_fixed.glb" "$ROOT/build_project/npc_dark_ihram.glb"
+          cp "$ROOT/build_project/player_normal_fixed.glb" "$ROOT/build_project/pilgrim_normal.glb"
+          cp "$ROOT/build_project/npc_young_fixed.glb" "$ROOT/build_project/npc_young_normal.glb"
+          cp "$ROOT/build_project/npc_stocky_fixed.glb" "$ROOT/build_project/npc_stocky_normal.glb"
+          rm -f "$ROOT/build_project/"*_raw.glb "$ROOT/build_project/"*_fixed.glb
+
+      - name: Generate Abyar Ali miqat and vehicle fleet
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$BLENDER" --background --python "$PWD/game-v10/build_miqat.py" -- "$PWD/build_project/miqat_abyar_ali.glb"
+          "$BLENDER" --background --python "$PWD/game-v10/build_bus.py" -- "$PWD/build_project/coach_bus_safir.glb" safir
+          "$BLENDER" --background --python "$PWD/game-v10/build_bus.py" -- "$PWD/build_project/coach_bus_standard.glb" standard
+          "$BLENDER" --background --python "$PWD/game-v10/build_car.py" -- "$PWD/build_project/traffic_car.glb"
+          test -s "$PWD/build_project/miqat_abyar_ali.glb"
+          test -s "$PWD/build_project/coach_bus_safir.glb"
+          test -s "$PWD/build_project/coach_bus_standard.glb"
+
+      - name: Render and validate V10 visual QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$BLENDER" --background --python "$PWD/game-v10/render_preview.py" -- \
+            "$PWD/build_project/pilgrim_normal.glb" \
+            "$PWD/build_project/pilgrim_ihram.glb" \
+            "$PWD/build_project/npc_older_ihram.glb" \
+            "$PWD/build_project/npc_dark_ihram.glb" \
+            "$PWD/build_project/npc_young_normal.glb" \
+            "$PWD/build_project/npc_stocky_normal.glb" \
+            "$PWD/build_project/miqat_abyar_ali.glb" \
+            "$PWD/build_project/coach_bus_safir.glb" \
+            "$PWD/build_project/coach_bus_standard.glb" \
+            "$PWD/dist/v10-preview.png"
+          test -s "$PWD/dist/v10-preview.png"
+
+      - name: Download Godot 4.7.2 and Windows templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          curl -fL "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip" -o godot.zip
+          unzip -q godot.zip
+          GODOT="$(find "$PWD" -maxdepth 1 -type f -name 'Godot_v4.7.2-stable_linux.x86_64*' | head -n1)"
+          chmod +x "$GODOT"
+          echo "GODOT=$GODOT" >> "$GITHUB_ENV"
+          curl -fL "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz" -o templates.tpz
+          rm -rf templates_unpacked
+          mkdir templates_unpacked
+          unzip -q templates.tpz -d templates_unpacked
+          TDEST="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$TDEST"
+          find templates_unpacked -type f -name 'windows_*.exe' -exec cp {} "$TDEST/" \;
+          "$GODOT" --version
+
+      - name: Import and smoke-test V10
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT" --headless --editor --path "$PWD/build_project" --quit 2>&1 | tee import.log
+          timeout 20 "$GODOT" --headless --path "$PWD/build_project" --quit-after 6 2>&1 | tee smoke.log || true
+          if grep -E "SCRIPT ERROR|Parse Error|Invalid call|Invalid access|ERROR: Failed to load" smoke.log import.log; then
+            echo "Scene validation failed."
+            exit 1
+          fi
+
+      - name: Export Windows EXE
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT" --headless --path "$PWD/build_project" --export-release "Windows Desktop" "$PWD/dist/شخصيه الحج والعمره 10.exe"
+          test -s "$PWD/dist/شخصيه الحج والعمره 10.exe"
+          file "$PWD/dist/شخصيه الحج والعمره 10.exe"
+          sha256sum "$PWD/dist/شخصيه الحج والعمره 10.exe"
+
+      - name: Upload Windows game and QA preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shakhsiyat-AlHajj-WalUmrah-10-Windows
+          path: |
+            dist/شخصيه الحج والعمره 10.exe
+            dist/v10-preview.png
+          if-no-files-found: error
+          compression-level: 0
