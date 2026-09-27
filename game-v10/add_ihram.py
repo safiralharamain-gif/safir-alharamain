@@ -64,11 +64,12 @@ rx_bottom=0.248; ry_bottom=0.162
 verts=[]; faces=[]
 for j in range(rings):
     t=j/(rings-1)
-    z=ankle+(waist-ankle)*t + (0.010*h*math.sin(a*2.0) if j==0 else 0.0)
+    z_base=ankle+(waist-ankle)*t
     rx=rx_bottom*(1-t)+rx_top*t
     ry=ry_bottom*(1-t)+ry_top*t
     for i in range(radial):
         a=2*math.pi*i/radial
+        z=z_base + (0.010*h*math.sin(a*2.0) if j==0 else 0.0)
         fold=1.0 + 0.040*math.sin(7*a+0.4) + 0.018*math.sin(13*a) + 0.010*math.sin(19*a+1.2)
         x=rx*fold*math.cos(a)
         y=ry*(1.0+0.012*math.sin(11*a))*math.sin(a)
