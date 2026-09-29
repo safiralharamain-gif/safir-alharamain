@@ -139,6 +139,47 @@ for fr in (1,30,60):
         b.keyframe_insert("scale",frame=fr)
 ad.action=None
 
+# Keep the real mocap LEGS, but replace the exaggerated arm spread with a small,
+# human walking swing close to the torso.  This is baked on the same rig, so there
+# is no retarget mismatch and no T-pose / clasped-hands fallback.
+ad.action=walk
+walk_hand_x=leg_half+H*.105
+walk_hand_z=hip_z-H*.165
+walk_hand_y=-H*.012
+walk_swing=H*.055
+
+wtL=empty("walk_hand_L",(left_sign*walk_hand_x,walk_hand_y,walk_hand_z))
+wtR=empty("walk_hand_R",(right_sign*walk_hand_x,walk_hand_y,walk_hand_z))
+wpL=empty("walk_elbow_L",(left_sign*(walk_hand_x+H*.15),-H*.095,shoulder_z-H*.11))
+wpR=empty("walk_elbow_R",(right_sign*(walk_hand_x+H*.15),-H*.095,shoulder_z-H*.11))
+wcL=add_ik(laL,wtL,wpL); wcR=add_ik(laR,wtR,wpR)
+
+cycle=max(2,end-start)
+for fr in range(start,end+1):
+    phase=2.0*math.pi*float(fr-start)/float(cycle)
+    s=math.sin(phase)
+    # Counter-swing: hands stay beside thighs, only a restrained fore/aft motion.
+    wtL.location=world((left_sign*walk_hand_x,walk_hand_y+walk_swing*s,walk_hand_z+H*.006*math.cos(phase)))
+    wtR.location=world((right_sign*walk_hand_x,walk_hand_y-walk_swing*s,walk_hand_z-H*.006*math.cos(phase)))
+    wpL.location=world((left_sign*(walk_hand_x+H*.15),-H*.095+walk_swing*.32*s,shoulder_z-H*.11))
+    wpR.location=world((right_sign*(walk_hand_x+H*.15),-H*.095-walk_swing*.32*s,shoulder_z-H*.11))
+    for o in (wtL,wtR,wpL,wpR):
+        o.keyframe_insert("location",frame=fr)
+
+# Bake evaluated IK arms while retaining the original mocap legs/hips/spine.
+bpy.context.view_layer.objects.active=arm
+arm.select_set(True)
+bpy.ops.object.mode_set(mode='POSE')
+bpy.ops.nla.bake(frame_start=start,frame_end=end,step=1,only_selected=False,
+    visual_keying=True,clear_constraints=True,clear_parents=False,
+    use_current_action=True,bake_types={'POSE'})
+bpy.ops.object.mode_set(mode='OBJECT')
+walk=ad.action
+walk.name="walk"; walk.use_fake_user=True
+for o in (wtL,wtR,wpL,wpR):
+    if o and o.name in bpy.data.objects:
+        bpy.data.objects.remove(o,do_unlink=True)
+
 # Lock wrists and fingers to the relaxed neutral pose while preserving the mocap
 # shoulder/elbow/leg motion. This removes twisted palms and fingers clipping into trousers.
 ad.action=walk
