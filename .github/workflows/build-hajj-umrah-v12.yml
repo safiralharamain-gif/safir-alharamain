@@ -35,10 +35,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat game-v12/labbayk_umrah.ogg.b64 | tr -d '\r\n ' | base64 -d > build_project/labbayk_umrah.ogg
-          test -s build_project/labbayk_umrah.ogg
-          file build_project/labbayk_umrah.ogg
-          test "$(stat -c%s build_project/labbayk_umrah.ogg)" -gt 20000
+          cat game-v12/audio/labbayk_00.b64 \
+              game-v12/audio/labbayk_01.b64 \
+              game-v12/audio/labbayk_02.b64 \
+              game-v12/audio/labbayk_03.b64 \
+            | tr -d '\r\n ' | base64 -d > build_project/labbayk_umrah.mp3
+          test -s build_project/labbayk_umrah.mp3
+          file build_project/labbayk_umrah.mp3
+          test "$(stat -c%s build_project/labbayk_umrah.mp3)" -gt 20000
 
       - name: Download Blender 4.5 LTS
         shell: bash
@@ -181,8 +185,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s build_project/labbayk_umrah.ogg
-          file build_project/labbayk_umrah.ogg
+          test -s build_project/labbayk_umrah.mp3
+          file build_project/labbayk_umrah.mp3
 
       - name: Download Godot 4.7.2 and Windows templates
         shell: bash
