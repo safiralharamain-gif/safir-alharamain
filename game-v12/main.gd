@@ -14,7 +14,7 @@ const NPC_OLDER_IHRAM := "res://npc_older_ihram.glb"
 const NPC_DARK_IHRAM := "res://npc_dark_ihram.glb"
 const NPC_YOUNG_NORMAL := "res://npc_young_normal.glb"
 const NPC_STOCKY_NORMAL := "res://npc_stocky_normal.glb"
-const LABBAYK_AUDIO := "res://labbayk_umrah.mp3"
+const LABBAYK_AUDIO := "res://labbayk_umrah.ogg"
 
 var player: CharacterBody3D
 var visual: Node3D
