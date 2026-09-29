@@ -10,7 +10,7 @@ const STANDARD_BUS_GLB := "res://coach_bus_standard.glb"
 const TRAFFIC_CAR_GLB := "res://traffic_car.glb"
 const MIQAT_GLB := "res://miqat_abyar_ali.glb"
 const MODEL_FORWARD_OFFSET := PI
-const WALK_METERS_PER_SEC := 1.38
+const WALK_METERS_PER_SEC := 1.00000 # AUTO_CALIBRATED_V13
 const NPC_OLDER_IHRAM := "res://npc_older_ihram.glb"
 const NPC_DARK_IHRAM := "res://npc_dark_ihram.glb"
 const NPC_YOUNG_NORMAL := "res://npc_young_normal.glb"
@@ -850,7 +850,7 @@ func _build_menu() -> void:
 	title.add_theme_font_size_override("font_size",42)
 	vb.add_child(title)
 	var sub := Label.new()
-	sub.text = "تدريب ثلاثي الأبعاد — ركوب باص متحرك، صوت التلبية عند الانطلاق، ومتابعة سينمائية للرحلة"
+	sub.text = "تدريب ثلاثي الأبعاد — مشية مضبوطة على طول الخطوة، كفوف طبيعية، وإحرام مستقل"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size",20)
 	vb.add_child(sub)
@@ -936,8 +936,10 @@ func _physics_process(delta: float) -> void:
 		wish = wish.normalized()
 
 	var running := Input.is_key_pressed(KEY_SHIFT)
-	# Tuned to the mocap stride so the feet no longer look like they are skating.
-	var speed := 2.42 if running else WALK_METERS_PER_SEC
+	# V13: world speed and animation speed use the SAME measured mocap stride.
+	# The build replaces WALK_METERS_PER_SEC with the value measured from the actual GLB.
+	var gait_scale := 1.55 if running else 1.0
+	var speed := WALK_METERS_PER_SEC * gait_scale
 	var target_x := wish.x * speed
 	var target_z := wish.z * speed
 	var accel := 12.0 if wish.length() > 0.01 else 16.0
@@ -951,7 +953,7 @@ func _physics_process(delta: float) -> void:
 	if wish.length() > 0.01:
 		var target_yaw := atan2(-wish.x, -wish.z)
 		visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw + MODEL_FORWARD_OFFSET, minf(1.0, delta * 7.0))
-		_play_clip("walk", 1.72 if running else 1.0)
+		_play_clip("walk", gait_scale)
 	else:
 		_play_clip("idle", 1.0)
 
