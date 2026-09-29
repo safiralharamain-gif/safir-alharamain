@@ -403,6 +403,10 @@ func _build_player() -> void:
 	ihram_anim = _find_class(ihram_model, "AnimationPlayer") as AnimationPlayer
 	_prepare_anims(normal_anim)
 	_prepare_anims(ihram_anim)
+	if normal_anim == null or not normal_anim.has_animation("walk") or not normal_anim.has_animation("idle"):
+		push_error("V13 player normal model is missing walk/idle animation")
+	if ihram_anim == null or not ihram_anim.has_animation("walk") or not ihram_anim.has_animation("idle"):
+		push_error("V13 ihram model is missing walk/idle animation")
 	active_anim = normal_anim
 
 	cam_pivot = Node3D.new()
