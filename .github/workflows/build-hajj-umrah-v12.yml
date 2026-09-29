@@ -45,11 +45,7 @@ jobs:
           test "$(stat -c%s build_project/labbayk_umrah.mp3)" -gt 20000
           DURATION="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build_project/labbayk_umrah.mp3)"
           echo "Uploaded Labbayk audio duration: $DURATION seconds"
-          python3 - "$DURATION" <<'PY'
-import sys
-d=float(sys.argv[1])
-assert 7.0 <= d <= 9.0, f"Unexpected audio duration: {d}"
-PY
+          awk -v d="$DURATION" 'BEGIN { if (d < 7.0 || d > 9.0) { print "Unexpected audio duration: " d; exit 1 } }'
 
       - name: Download Blender 4.5 LTS
         shell: bash
