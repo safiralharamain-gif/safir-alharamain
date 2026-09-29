@@ -26,11 +26,13 @@ def pos(arm,bone):
 
 def validate_pose(arm,label):
     bpy.context.view_layer.update()
-    required=("pelvis","hand_l","hand_r","upperarm_l","upperarm_r","foot_l","foot_r")
+    required=("pelvis","hand_l","hand_r","upperarm_l","upperarm_r","thigh_l","thigh_r","calf_l","calf_r","foot_l","foot_r")
     if any(n not in arm.pose.bones for n in required):
         raise RuntimeError(label+" missing bones")
     pel=pos(arm,"pelvis"); lh=pos(arm,"hand_l"); rh=pos(arm,"hand_r")
     lu=pos(arm,"upperarm_l"); ru=pos(arm,"upperarm_r")
+    lt=pos(arm,"thigh_l"); rt=pos(arm,"thigh_r")
+    lk=pos(arm,"calf_l"); rk=pos(arm,"calf_r")
     lf=pos(arm,"foot_l"); rf=pos(arm,"foot_r")
     s=1.0 if lu.x>ru.x else -1.0
     lg=s*(lh.x-pel.x); rg=-s*(rh.x-pel.x)
@@ -38,9 +40,19 @@ def validate_pose(arm,label):
         raise RuntimeError(f"{label}: hand too close/crossing torso L={lg:.3f} R={rg:.3f}")
     if lh.z>lu.z-0.08 or rh.z>ru.z-0.08:
         raise RuntimeError(label+": arms too high")
-    if abs(lf.x-rf.x)<0.05:
-        print("WARN",label,"feet nearly same x",lf.x,rf.x)
-    print("POSE_OK",label,"hands",round(lg,3),round(rg,3),"feet",lf,rf)
+    # Reject the exact failure visible in the previous build: knee/leg shooting sideways or crossing.
+    lks=s*(lk.x-pel.x); rks=-s*(rk.x-pel.x)
+    lfs=s*(lf.x-pel.x); rfs=-s*(rf.x-pel.x)
+    if lks < -0.035 or rks < -0.035:
+        raise RuntimeError(f"{label}: knee crossed body center L={lks:.3f} R={rks:.3f}")
+    if lks > 0.42 or rks > 0.42:
+        raise RuntimeError(f"{label}: knee kicked sideways L={lks:.3f} R={rks:.3f}")
+    if lfs < -0.10 or rfs < -0.10:
+        raise RuntimeError(f"{label}: foot crossed unnaturally L={lfs:.3f} R={rfs:.3f}")
+    if abs(lk.x-lt.x) > 0.30 or abs(rk.x-rt.x) > 0.30:
+        raise RuntimeError(label+": excessive lateral knee displacement")
+    print("POSE_OK",label,"hands",round(lg,3),round(rg,3),
+          "knees",round(lks,3),round(rks,3),"feet",lf,rf)
 
 def setup_scene():
     # floor
