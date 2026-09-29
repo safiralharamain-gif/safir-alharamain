@@ -23,7 +23,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl unzip xz-utils libgl1 libegl1 libx11-6 libxkbcommon0 libxcursor1 libxinerama1 libxi6 libxrandr2
+          sudo apt-get install -y curl unzip xz-utils ffmpeg libgl1 libegl1 libx11-6 libxkbcommon0 libxcursor1 libxinerama1 libxi6 libxrandr2
 
       - name: Prepare project
         run: |
@@ -43,6 +43,13 @@ jobs:
           test -s build_project/labbayk_umrah.mp3
           file build_project/labbayk_umrah.mp3
           test "$(stat -c%s build_project/labbayk_umrah.mp3)" -gt 20000
+          DURATION="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build_project/labbayk_umrah.mp3)"
+          echo "Uploaded Labbayk audio duration: $DURATION seconds"
+          python3 - "$DURATION" <<'PY'
+import sys
+d=float(sys.argv[1])
+assert 7.0 <= d <= 9.0, f"Unexpected audio duration: {d}"
+PY
 
       - name: Download Blender 4.5 LTS
         shell: bash
