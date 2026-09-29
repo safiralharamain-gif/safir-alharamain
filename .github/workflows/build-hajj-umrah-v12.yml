@@ -31,6 +31,19 @@ jobs:
           mkdir -p build_project dist build_tools
           cp -a game-v12/. build_project/
 
+      - name: Restore uploaded talbiyah audio
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat game-v12/audio/labbayk_umrah.part0.b64 \
+              game-v12/audio/labbayk_umrah.part1.b64 \
+              game-v12/audio/labbayk_umrah.part2.b64 \
+              game-v12/audio/labbayk_umrah.part3.b64 \
+            | base64 -d > build_project/labbayk_umrah.ogg
+          test -s build_project/labbayk_umrah.ogg
+          file build_project/labbayk_umrah.ogg
+          test "$(stat -c%s build_project/labbayk_umrah.ogg)" -gt 40000
+
       - name: Download Blender 4.5 LTS
         shell: bash
         run: |
