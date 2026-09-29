@@ -40,7 +40,6 @@ def validate_pose(arm,label):
         raise RuntimeError(f"{label}: hand too close/crossing torso L={lg:.3f} R={rg:.3f}")
     if lh.z>lu.z-0.08 or rh.z>ru.z-0.08:
         raise RuntimeError(label+": arms too high")
-    # Reject the exact failure visible in the previous build: knee/leg shooting sideways or crossing.
     lks=s*(lk.x-pel.x); rks=-s*(rk.x-pel.x)
     lfs=s*(lf.x-pel.x); rfs=-s*(rf.x-pel.x)
     if lks < -0.035 or rks < -0.035:
@@ -59,7 +58,6 @@ def validate_pose(arm,label):
           "knees",round(lks,3),round(rks,3),"feet",lf,rf)
 
 def setup_scene():
-    # floor
     mat=bpy.data.materials.new("Ground"); mat.diffuse_color=(0.31,0.31,0.30,1)
     bpy.ops.mesh.primitive_plane_add(size=12,location=(0,0,-.02))
     bpy.context.object.data.materials.append(mat)
@@ -73,12 +71,12 @@ def setup_scene():
     bpy.context.object.data.energy=850; bpy.context.object.data.size=4.5
     bpy.ops.object.light_add(type='AREA',location=(5,-1,4))
     bpy.context.object.data.energy=500; bpy.context.object.data.size=3.5
-    bpy.ops.object.camera_add(location=(3.2,-6.2,2.2))
-    cam=bpy.context.object; cam.data.lens=62
-    cam.rotation_euler=(Vector((0,0,1.0))-cam.location).to_track_quat('-Z','Y').to_euler()
+    bpy.ops.object.camera_add(location=(2.0,-4.5,1.85))
+    cam=bpy.context.object; cam.data.lens=68
+    cam.rotation_euler=(Vector((0,0,0.95))-cam.location).to_track_quat('-Z','Y').to_euler()
     bpy.context.scene.camera=cam
     s=bpy.context.scene; s.render.engine='BLENDER_WORKBENCH'
-    s.render.resolution_x=360; s.render.resolution_y=360; s.render.resolution_percentage=100
+    s.render.resolution_x=480; s.render.resolution_y=480; s.render.resolution_percentage=100
     s.render.image_settings.file_format='PNG'
     s.view_settings.look='AgX - Medium High Contrast'
     return cam
@@ -93,17 +91,15 @@ def render_character(path,clip,frame,name,back=False):
     validate_pose(arm,name)
     cam=setup_scene()
     if back:
-        cam.location=(-3.2,6.2,2.2)
-        cam.rotation_euler=(Vector((0,0,1.0))-cam.location).to_track_quat('-Z','Y').to_euler()
+        cam.location=(-2.0,4.5,1.85)
+        cam.rotation_euler=(Vector((0,0,0.95))-cam.location).to_track_quat('-Z','Y').to_euler()
     bpy.context.scene.render.filepath=os.path.join(out_dir,name+".png")
     bpy.ops.render.render(write_still=True)
 
-# Determine walk quarters from the normal model.
 clear(); arm,_=import_char(normal_path); walk=get_action("walk")
 if walk is None: raise RuntimeError("No walk action")
 f0=int(round(walk.frame_range[0])); f1=int(round(walk.frame_range[1])); span=max(1,f1-f0)
 frames=[f0,f0+span//4,f0+span//2,f0+3*span//4]
-# Clear again before actual renders.
 for i,fr in enumerate(frames):
     render_character(normal_path,"walk",fr,f"walk_{i}")
 render_character(normal_path,"idle",1,"idle_front")
@@ -111,4 +107,4 @@ render_character(ihram_path,"idle",1,"ihram_front")
 render_character(ihram_path,"idle",1,"ihram_back",True)
 render_character(npc_path,"walk",frames[1],"npc_walk")
 
-print("V13_MOTION_QA_RENDERED",out_dir)
+print("V14_MOTION_QA_RENDERED",out_dir)
