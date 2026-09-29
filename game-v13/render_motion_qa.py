@@ -51,6 +51,10 @@ def validate_pose(arm,label):
         raise RuntimeError(f"{label}: foot crossed unnaturally L={lfs:.3f} R={rfs:.3f}")
     if abs(lk.x-lt.x) > 0.30 or abs(rk.x-rt.x) > 0.30:
         raise RuntimeError(label+": excessive lateral knee displacement")
+    if abs(lk.x-rk.x) < 0.10:
+        raise RuntimeError(label+": knees collapsed toward each other")
+    if abs(lf.x-rf.x) < 0.09:
+        raise RuntimeError(label+": feet crossed or collapsed toward each other")
     print("POSE_OK",label,"hands",round(lg,3),round(rg,3),
           "knees",round(lks,3),round(rks,3),"feet",lf,rf)
 
