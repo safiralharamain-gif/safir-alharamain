@@ -1,0 +1,98 @@
+import bpy, os, sys, math
+from mathutils import Vector
+
+argv=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
+normal_path,ihram_path,npc_path,out_dir=argv[:4]
+os.makedirs(out_dir,exist_ok=True)
+
+def clear():
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+    for a in list(bpy.data.actions): bpy.data.actions.remove(a)
+
+def import_char(path):
+    before=set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=os.path.abspath(path))
+    objs=[o for o in bpy.data.objects if o not in before]
+    arm=next((o for o in objs if o.type=='ARMATURE'),None)
+    if arm is None: raise RuntimeError("No armature "+path)
+    return arm,objs
+
+def get_action(prefix):
+    return next((a for a in bpy.data.actions if a.name.lower().startswith(prefix)),None)
+
+def pos(arm,bone):
+    return arm.matrix_world @ arm.pose.bones[bone].head
+
+def validate_pose(arm,label):
+    bpy.context.view_layer.update()
+    required=("pelvis","hand_l","hand_r","upperarm_l","upperarm_r","foot_l","foot_r")
+    if any(n not in arm.pose.bones for n in required):
+        raise RuntimeError(label+" missing bones")
+    pel=pos(arm,"pelvis"); lh=pos(arm,"hand_l"); rh=pos(arm,"hand_r")
+    lu=pos(arm,"upperarm_l"); ru=pos(arm,"upperarm_r")
+    lf=pos(arm,"foot_l"); rf=pos(arm,"foot_r")
+    s=1.0 if lu.x>ru.x else -1.0
+    lg=s*(lh.x-pel.x); rg=-s*(rh.x-pel.x)
+    if lg<0.055 or rg<0.055:
+        raise RuntimeError(f"{label}: hand too close/crossing torso L={lg:.3f} R={rg:.3f}")
+    if lh.z>lu.z-0.08 or rh.z>ru.z-0.08:
+        raise RuntimeError(label+": arms too high")
+    if abs(lf.x-rf.x)<0.05:
+        print("WARN",label,"feet nearly same x",lf.x,rf.x)
+    print("POSE_OK",label,"hands",round(lg,3),round(rg,3),"feet",lf,rf)
+
+def setup_scene():
+    # floor
+    mat=bpy.data.materials.new("Ground"); mat.diffuse_color=(0.31,0.31,0.30,1)
+    bpy.ops.mesh.primitive_plane_add(size=12,location=(0,0,-.02))
+    bpy.context.object.data.materials.append(mat)
+    world=bpy.context.scene.world or bpy.data.worlds.new("World")
+    bpy.context.scene.world=world; world.use_nodes=True
+    world.node_tree.nodes["Background"].inputs["Color"].default_value=(0.52,0.56,0.62,1)
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value=.7
+    bpy.ops.object.light_add(type='SUN',location=(0,-4,9))
+    sun=bpy.context.object; sun.data.energy=2.2; sun.rotation_euler=(math.radians(35),0,math.radians(-25))
+    bpy.ops.object.light_add(type='AREA',location=(-3,-5,6))
+    bpy.context.object.data.energy=850; bpy.context.object.data.size=4.5
+    bpy.ops.object.light_add(type='AREA',location=(5,-1,4))
+    bpy.context.object.data.energy=500; bpy.context.object.data.size=3.5
+    bpy.ops.object.camera_add(location=(3.2,-6.2,2.2))
+    cam=bpy.context.object; cam.data.lens=62
+    cam.rotation_euler=(Vector((0,0,1.0))-cam.location).to_track_quat('-Z','Y').to_euler()
+    bpy.context.scene.camera=cam
+    s=bpy.context.scene; s.render.engine='BLENDER_EEVEE_NEXT'
+    s.render.resolution_x=720; s.render.resolution_y=720; s.render.resolution_percentage=100
+    s.render.image_settings.file_format='PNG'
+    s.view_settings.look='AgX - Medium High Contrast'
+    return cam
+
+def render_character(path,clip,frame,name,back=False):
+    clear()
+    arm,objs=import_char(path)
+    act=get_action(clip)
+    if act is None: raise RuntimeError("Missing "+clip+" in "+path)
+    arm.animation_data_create(); arm.animation_data.action=act
+    bpy.context.scene.frame_set(frame)
+    validate_pose(arm,name)
+    cam=setup_scene()
+    if back:
+        cam.location=(-3.2,6.2,2.2)
+        cam.rotation_euler=(Vector((0,0,1.0))-cam.location).to_track_quat('-Z','Y').to_euler()
+    bpy.context.scene.render.filepath=os.path.join(out_dir,name+".png")
+    bpy.ops.render.render(write_still=True)
+
+# Determine walk quarters from the normal model.
+clear(); arm,_=import_char(normal_path); walk=get_action("walk")
+if walk is None: raise RuntimeError("No walk action")
+f0=int(round(walk.frame_range[0])); f1=int(round(walk.frame_range[1])); span=max(1,f1-f0)
+frames=[f0,f0+span//4,f0+span//2,f0+3*span//4]
+# Clear again before actual renders.
+for i,fr in enumerate(frames):
+    render_character(normal_path,"walk",fr,f"walk_{i}")
+render_character(normal_path,"idle",1,"idle_front")
+render_character(ihram_path,"idle",1,"ihram_front")
+render_character(ihram_path,"idle",1,"ihram_back",True)
+render_character(npc_path,"walk",frames[1],"npc_walk")
+
+print("V13_MOTION_QA_RENDERED",out_dir)
