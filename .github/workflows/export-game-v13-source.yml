@@ -28,34 +28,33 @@ jobs:
           cp -a game-v12/audio/. source_package/game-v12/audio/
           mkdir -p source_package/.github/workflows
           cp .github/workflows/build-hajj-umrah-v13.yml source_package/.github/workflows/
-          cat > source_package/README_SOURCE.txt <<'EOF'
-Hajj & Umrah Training Game V13 - Editable Godot Source
-
-Main editable project:
-  game-v13/project.godot
-  game-v13/main.gd
-  game-v13/main.tscn
-
-Character / movement / ihram source:
-  game-v13/fix_animations.py
-  game-v13/add_ihram.py
-  game-v13/measure_walk.py
-
-Miqat / route / vehicles source:
-  game-v13/build_miqat.py
-  game-v13/build_bus.py
-  game-v13/build_car.py
-
-Build pipeline:
-  .github/workflows/build-hajj-umrah-v13.yml
-
-Talbiyah audio source chunks:
-  game-v12/audio/
-
-Important:
-The GLB character, ihram, NPC, miqat and vehicle files are generated during the GitHub Actions build.
-The Windows EXE is an export; edit the files above instead of decompiling main.gdc.
-EOF
+          printf '%s\n' \
+            'Hajj & Umrah Training Game V13 - Editable Godot Source' \
+            '' \
+            'Main editable project:' \
+            '  game-v13/project.godot' \
+            '  game-v13/main.gd' \
+            '  game-v13/main.tscn' \
+            '' \
+            'Character / movement / ihram source:' \
+            '  game-v13/fix_animations.py' \
+            '  game-v13/add_ihram.py' \
+            '  game-v13/measure_walk.py' \
+            '' \
+            'Miqat / route / vehicles source:' \
+            '  game-v13/build_miqat.py' \
+            '  game-v13/build_bus.py' \
+            '  game-v13/build_car.py' \
+            '' \
+            'Build pipeline:' \
+            '  .github/workflows/build-hajj-umrah-v13.yml' \
+            '' \
+            'Talbiyah audio source chunks:' \
+            '  game-v12/audio/' \
+            '' \
+            'Important: GLB characters, ihram, NPCs, miqat and vehicles are generated during GitHub Actions build.' \
+            'Edit the source files above instead of decompiling main.gdc from the exported EXE.' \
+            > source_package/README_SOURCE.txt
           cd source_package
           zip -r ../dist/game-v13-editable-source.zip .
           cd ..
