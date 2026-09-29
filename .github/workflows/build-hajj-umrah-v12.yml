@@ -38,8 +38,9 @@ jobs:
           cat game-v12/audio/labbayk_umrah.part0.b64 \
               game-v12/audio/labbayk_umrah.part1.b64 \
               game-v12/audio/labbayk_umrah.part2.b64 \
-              game-v12/audio/labbayk_umrah.part3.b64 \
-            | base64 -d > build_project/labbayk_umrah.ogg
+              game-v12/audio/labbayk_umrah.part3a.b64 \
+              game-v12/audio/labbayk_umrah.part3b.b64 \
+            | tr -d '\r\n ' | base64 -d > build_project/labbayk_umrah.ogg
           test -s build_project/labbayk_umrah.ogg
           file build_project/labbayk_umrah.ogg
           test "$(stat -c%s build_project/labbayk_umrah.ogg)" -gt 40000
@@ -181,16 +182,12 @@ jobs:
             "$PWD/dist/v12-preview.png"
           test -s "$PWD/dist/v12-preview.png"
 
-      - name: Restore uploaded Labbayk audio
+      - name: Verify uploaded Labbayk audio
         shell: bash
         run: |
           set -euo pipefail
-          if ls game-v12/audio/labbayk_*.b64 >/dev/null 2>&1; then
-            cat game-v12/audio/labbayk_*.b64 | tr -d '\r\n ' | base64 -d > build_project/labbayk_umrah.ogg
-            test -s build_project/labbayk_umrah.ogg
-          else
-            echo "Audio chunks not present yet; continuing gait QA."
-          fi
+          test -s build_project/labbayk_umrah.ogg
+          file build_project/labbayk_umrah.ogg
 
       - name: Download Godot 4.7.2 and Windows templates
         shell: bash
