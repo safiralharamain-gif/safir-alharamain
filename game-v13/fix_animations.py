@@ -88,7 +88,7 @@ def set_sagittal(bn, angle, frame):
 def set_finger_relax(action, frames):
     arm.animation_data.action = action
     zaxis = Vector((0,0,1))
-    curl = {"01": -0.07, "02": -0.12, "03": -0.08}
+    curl = {"01": -0.10, "02": -0.22, "03": -0.16}
     for fr in frames:
         for side in ("l", "r"):
             for finger in ("index", "middle", "ring", "pinky"):
@@ -139,6 +139,13 @@ for o in (hL,hR,eL,eR):
 reset_pose()
 walk = bpy.data.actions.new("walk"); arm.animation_data.action = walk
 
+# Position-IK arms: hands stay close to the body and swing front/back, never sideways.
+whL = empty("walk_hand_L", (left_sign*hand_x, hand_y, hand_z))
+whR = empty("walk_hand_R", (right_sign*hand_x, hand_y, hand_z))
+weL = empty("walk_elbow_L", (left_sign*(hand_x+H*0.085), -H*0.060, shoulder_z-H*0.110))
+weR = empty("walk_elbow_R", (right_sign*(hand_x+H*0.085), -H*0.060, shoulder_z-H*0.110))
+add_ik(laL, whL, weL); add_ik(laR, whR, weR)
+
 poses = [
     (1,  0.40, -0.10,  0.07,  -0.38, -0.22, -0.12, -1.00),
     (5,  0.31, -0.22,  0.02,  -0.26, -0.34, -0.08, -0.72),
@@ -164,15 +171,22 @@ for fr, rt, rk, rf, lt, lk, lf, phase in poses:
     if spine:
         set_sagittal(spine, 0.028, fr)
 
-    arm_angle = 0.34 * phase
-    set_sagittal(uaR, arm_angle, fr)
-    set_sagittal(uaL, -arm_angle, fr)
-    elbow = -0.16 - 0.05*abs(phase)
-    set_sagittal(laR, elbow, fr)
-    set_sagittal(laL, elbow, fr)
+    swing = H * 0.085 * phase
+    lift = H * 0.010 * abs(phase)
+    key_obj(whL, fr, (left_sign*hand_x, hand_y + swing, hand_z + lift))
+    key_obj(whR, fr, (right_sign*hand_x, hand_y - swing, hand_z + lift))
 
-walk.use_fake_user=True
+bpy.context.view_layer.objects.active=arm; arm.select_set(True)
+bpy.ops.object.mode_set(mode='POSE')
+bpy.ops.nla.bake(frame_start=1,frame_end=33,step=1,only_selected=False,
+                 visual_keying=True,clear_constraints=True,clear_parents=False,
+                 use_current_action=True,bake_types={'POSE'})
+bpy.ops.object.mode_set(mode='OBJECT')
+walk=arm.animation_data.action; walk.name="walk"; walk.use_fake_user=True
 set_finger_relax(walk, tuple(p[0] for p in poses))
+for o in (whL,whR,weL,weR):
+    if o and o.name in bpy.data.objects:
+        bpy.data.objects.remove(o,do_unlink=True)
 
 for fc in walk.fcurves:
     for kp in fc.keyframe_points:
