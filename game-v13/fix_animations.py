@@ -1,5 +1,5 @@
 import bpy, os, sys, math
-from mathutils import Vector
+from mathutils import Vector, Quaternion
 
 argv=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
 src,out=argv[:2]
@@ -67,10 +67,22 @@ def add_ik(bone,target,pole,chain=2):
 
 def reset_pose():
     for b in pb:
-        b.rotation_mode='XYZ'
-        b.rotation_euler=(0,0,0)
+        b.rotation_mode='QUATERNION'
+        b.rotation_quaternion=(1,0,0,0)
         b.location=(0,0,0)
         b.scale=(1,1,1)
+
+# Flexion/extension must rotate around the CHARACTER'S left-right axis, not an arbitrary
+# bone-local X axis. Convert armature-space X into each bone's own local rest space.
+def lateral_axis_local(bn):
+    axis = bones[bn].matrix_local.to_3x3().inverted() @ Vector((1,0,0))
+    axis.normalize()
+    return axis
+
+def set_sagittal_rotation(bn,angle,frame):
+    pb[bn].rotation_mode='QUATERNION'
+    pb[bn].rotation_quaternion=Quaternion(lateral_axis_local(bn),angle)
+    pb[bn].keyframe_insert("rotation_quaternion",frame=frame)
 
 def relax_hands(action,frames):
     arm.animation_data.action=action
@@ -152,17 +164,14 @@ poses=[
 arm_swing=H*0.055
 for fr,rt,rc,rf,lt,lc,lf,phase in poses:
     for bn,ang in ((thR,rt),(caR,rc),(footR,rf),(thL,lt),(caL,lc),(footL,lf)):
-        pb[bn].rotation_mode='XYZ'
-        pb[bn].rotation_euler=(ang,0,0)
-        pb[bn].keyframe_insert("rotation_euler",frame=fr)
+        set_sagittal_rotation(bn,ang,fr)
     # very small body bob and forward lean, with absolutely no roll/yaw
     pb[pelvis].location=(0,0,H*(0.006 if phase==0 else 0.0))
     pb[pelvis].keyframe_insert("location",frame=fr)
-    pb[pelvis].rotation_mode='XYZ'; pb[pelvis].rotation_euler=(0,0,0)
-    pb[pelvis].keyframe_insert("rotation_euler",frame=fr)
+    pb[pelvis].rotation_mode='QUATERNION'; pb[pelvis].rotation_quaternion=(1,0,0,0)
+    pb[pelvis].keyframe_insert("rotation_quaternion",frame=fr)
     if spine:
-        pb[spine].rotation_mode='XYZ'; pb[spine].rotation_euler=(0.018,0,0)
-        pb[spine].keyframe_insert("rotation_euler",frame=fr)
+        set_sagittal_rotation(spine,0.018,fr)
     # counter-swing hands gently forward/back while staying clear of thighs
     key_obj(whL,fr,(left_sign*hand_x,hand_y+arm_swing*phase,hand_z))
     key_obj(whR,fr,(right_sign*hand_x,hand_y-arm_swing*phase,hand_z))
