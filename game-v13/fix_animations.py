@@ -84,29 +84,43 @@ def set_sagittal_rotation(bn,angle,frame):
     pb[bn].rotation_quaternion=Quaternion(lateral_axis_local(bn),angle)
     pb[bn].keyframe_insert("rotation_quaternion",frame=frame)
 
+def finger_flex_axis_local(bn):
+    # Fingers extend sideways in the MakeHuman rest pose; flexion is around armature-space Y.
+    axis=bones[bn].matrix_local.to_3x3().inverted() @ Vector((0,1,0))
+    if axis.length<1e-6: axis=Vector((1,0,0))
+    axis.normalize()
+    return axis
+
 def relax_hands(action,frames):
     arm.animation_data.action=action
     for fr in frames:
         bpy.context.scene.frame_set(fr)
         for side in ("l","r"):
+            # Wrist neutral. Keep hand bone aligned with the forearm.
             hn=f"hand_{side}"
             if hn in pb:
-                pb[hn].rotation_mode='XYZ'
-                pb[hn].rotation_euler=(0,0,0)
-                pb[hn].keyframe_insert("rotation_euler",frame=fr)
-            thumb=f"thumb_01_{side}"
-            if thumb in pb:
-                pb[thumb].rotation_mode='XYZ'
-                pb[thumb].rotation_euler=(0.02,0,-0.12 if side=="l" else 0.12)
-                pb[thumb].keyframe_insert("rotation_euler",frame=fr)
+                pb[hn].rotation_mode='QUATERNION'
+                pb[hn].rotation_quaternion=(1,0,0,0)
+                pb[hn].keyframe_insert("rotation_quaternion",frame=fr)
+            # Natural loose curl, stronger at the middle phalanges.
             for finger in ("index","middle","ring","pinky"):
-                for seg,amt in (("01",-0.10),("02",-0.22),("03",-0.16)):
+                for seg,amt in (("01",0.24),("02",0.46),("03",0.30)):
                     n=f"{finger}_{seg}_{side}"
                     if n in pb:
-                        pb[n].rotation_mode='XYZ'
-                        pb[n].rotation_euler=(0,0,amt)
-                        pb[n].keyframe_insert("rotation_euler",frame=fr)
+                        sign=1.0 if side=="l" else -1.0
+                        pb[n].rotation_mode='QUATERNION'
+                        pb[n].rotation_quaternion=Quaternion(finger_flex_axis_local(n),sign*amt)
+                        pb[n].keyframe_insert("rotation_quaternion",frame=fr)
+            # Thumb slightly folded toward the palm, not sticking out.
+            for seg,amt in (("01",0.16),("02",0.22),("03",0.14)):
+                n=f"thumb_{seg}_{side}"
+                if n in pb:
+                    sign=1.0 if side=="l" else -1.0
+                    pb[n].rotation_mode='QUATERNION'
+                    pb[n].rotation_quaternion=Quaternion(finger_flex_axis_local(n),sign*amt)
+                    pb[n].keyframe_insert("rotation_quaternion",frame=fr)
     arm.animation_data.action=None
+
 
 # ---------- relaxed idle ----------
 reset_pose()
@@ -153,15 +167,15 @@ weR=empty("walk_elbow_R",(right_sign*(hand_x+H*0.10),-H*0.07,shoulder_z-H*0.11))
 add_ik(laL,whL,weL); add_ik(laR,whR,weR)
 
 # Proven MakeHuman-style walk poses: contact, passing, opposite contact, passing, loop.
-A=0.48
+A=0.29
 poses=[
-    (1,   A,-0.08, 0.18,   -A,-0.28,-0.28,   -1.0),
-    (9,   0,-0.10, 0.00,    0,-0.82, 0.12,    0.0),
-    (17, -A,-0.28,-0.28,    A,-0.08, 0.18,    1.0),
-    (25,  0,-0.82, 0.12,    0,-0.10, 0.00,    0.0),
-    (33,  A,-0.08, 0.18,   -A,-0.28,-0.28,   -1.0),
+    (1,   A,-0.10, 0.08,   -A,-0.24,-0.14,   -1.0),
+    (9,   0,-0.12, 0.00,    0,-0.56, 0.08,    0.0),
+    (17, -A,-0.24,-0.14,    A,-0.10, 0.08,    1.0),
+    (25,  0,-0.56, 0.08,    0,-0.12, 0.00,    0.0),
+    (33,  A,-0.10, 0.08,   -A,-0.24,-0.14,   -1.0),
 ]
-arm_swing=H*0.055
+arm_swing=H*0.035
 for fr,rt,rc,rf,lt,lc,lf,phase in poses:
     for bn,ang in ((thR,rt),(caR,rc),(footR,rf),(thL,lt),(caL,lc),(footL,lf)):
         set_sagittal_rotation(bn,ang,fr)
