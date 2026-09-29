@@ -107,12 +107,12 @@ def add_ik(lower,target,pole):
     c=lower.constraints.new('IK'); c.target=target; c.pole_target=pole; c.chain_count=2; c.use_rotation=False
     return c
 
-hand_x=leg_half+H*.115
+hand_x=leg_half+H*.058
 hand_z=hip_z-H*.165
 hand_y=-H*.015
 tL=empty("idle_hand_L",(left_sign*hand_x,hand_y,hand_z))
 tR=empty("idle_hand_R",(right_sign*hand_x,hand_y,hand_z))
-pL=empty("idle_elbow_L",(left_sign*(hand_x+H*.16),-H*.09,shoulder_z-H*.10))
+pL=empty("idle_elbow_L",(left_sign*(hand_x+H*.095),-H*.065,shoulder_z-H*.10))
 pR=empty("idle_elbow_R",(right_sign*(hand_x+H*.16),-H*.09,shoulder_z-H*.10))
 cL=add_ik(laL,tL,pL); cR=add_ik(laR,tR,pR)
 bpy.context.view_layer.update()
@@ -143,14 +143,14 @@ ad.action=None
 # human walking swing close to the torso.  This is baked on the same rig, so there
 # is no retarget mismatch and no T-pose / clasped-hands fallback.
 ad.action=walk
-walk_hand_x=leg_half+H*.105
+walk_hand_x=leg_half+H*.062
 walk_hand_z=hip_z-H*.165
 walk_hand_y=-H*.012
-walk_swing=H*.055
+walk_swing=H*.040
 
 wtL=empty("walk_hand_L",(left_sign*walk_hand_x,walk_hand_y,walk_hand_z))
 wtR=empty("walk_hand_R",(right_sign*walk_hand_x,walk_hand_y,walk_hand_z))
-wpL=empty("walk_elbow_L",(left_sign*(walk_hand_x+H*.15),-H*.095,shoulder_z-H*.11))
+wpL=empty("walk_elbow_L",(left_sign*(walk_hand_x+H*.10),-H*.070,shoulder_z-H*.11))
 wpR=empty("walk_elbow_R",(right_sign*(walk_hand_x+H*.15),-H*.095,shoulder_z-H*.11))
 wcL=add_ik(laL,wtL,wpL); wcR=add_ik(laR,wtR,wpR)
 
