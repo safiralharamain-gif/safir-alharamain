@@ -10,6 +10,7 @@ const STANDARD_BUS_GLB := "res://coach_bus_standard.glb"
 const TRAFFIC_CAR_GLB := "res://traffic_car.glb"
 const MIQAT_GLB := "res://miqat_abyar_ali.glb"
 const MODEL_FORWARD_OFFSET := PI
+const WALK_METERS_PER_SEC := 1.38
 const NPC_OLDER_IHRAM := "res://npc_older_ihram.glb"
 const NPC_DARK_IHRAM := "res://npc_dark_ihram.glb"
 const NPC_YOUNG_NORMAL := "res://npc_young_normal.glb"
@@ -528,7 +529,9 @@ func _spawn_npc(path: String, start: Vector3, points: Array[Vector3], speed: flo
 	var ap := _find_class(n, "AnimationPlayer") as AnimationPlayer
 	_prepare_anims(ap)
 	if ap and ap.has_animation("walk"):
-		ap.play("walk",0.25,0.88 + (scale_v-1.0)*0.3)
+		# Match animation cadence to actual world speed so feet plant instead of sliding.
+		var anim_speed := clampf(speed / WALK_METERS_PER_SEC, 0.55, 1.05)
+		ap.play("walk", 0.25, anim_speed)
 	npc_agents.append({
 		"node": n,
 		"anim": ap,
@@ -934,7 +937,7 @@ func _physics_process(delta: float) -> void:
 
 	var running := Input.is_key_pressed(KEY_SHIFT)
 	# Tuned to the mocap stride so the feet no longer look like they are skating.
-	var speed := 2.65 if running else 1.42
+	var speed := 2.42 if running else WALK_METERS_PER_SEC
 	var target_x := wish.x * speed
 	var target_z := wish.z * speed
 	var accel := 12.0 if wish.length() > 0.01 else 16.0
@@ -948,7 +951,7 @@ func _physics_process(delta: float) -> void:
 	if wish.length() > 0.01:
 		var target_yaw := atan2(-wish.x, -wish.z)
 		visual.rotation.y = lerp_angle(visual.rotation.y, target_yaw + MODEL_FORWARD_OFFSET, minf(1.0, delta * 7.0))
-		_play_clip("walk", 1.48 if running else 1.0)
+		_play_clip("walk", 1.72 if running else 1.0)
 	else:
 		_play_clip("idle", 1.0)
 
