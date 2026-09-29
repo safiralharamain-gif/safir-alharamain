@@ -139,7 +139,24 @@ for fr in (1,30,60):
         b.keyframe_insert("scale",frame=fr)
 ad.action=None
 
-# Run reuses the proven full-body human walk. Godot speeds it up instead of inventing a second gait.
+# Lock wrists and fingers to the relaxed neutral pose while preserving the mocap
+# shoulder/elbow/leg motion. This removes twisted palms and fingers clipping into trousers.
+ad.action=walk
+relaxed_bones=["hand_l","hand_r"]+finger_names
+for n in relaxed_bones:
+    if n not in pb or n not in neutral:
+        continue
+    pb[n].rotation_mode='QUATERNION'
+    q=neutral[n].to_quaternion()
+    for fr in range(start,end+1,3):
+        pb[n].rotation_quaternion=q
+        pb[n].keyframe_insert("rotation_quaternion",frame=fr,group=n)
+    if (end-start) % 3 != 0:
+        pb[n].rotation_quaternion=q
+        pb[n].keyframe_insert("rotation_quaternion",frame=end,group=n)
+ad.action=None
+
+# Run reuses the same natural full-body human gait at a faster cadence.
 run=walk.copy(); run.name="run"; run.use_fake_user=True
 
 # Explicitly attach all clips for deterministic glTF ACTIONS export.
