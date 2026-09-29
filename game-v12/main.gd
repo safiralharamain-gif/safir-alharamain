@@ -722,7 +722,7 @@ func _start_bus_journey() -> void:
 	camera.fov = 62.0
 
 	# Play the user's uploaded talbiyah/niyyah recording once at departure.
-	if bus_audio and bus_audio.stream:
+	if training_mode == "umrah" and bus_audio and bus_audio.stream:
 		bus_audio.play()
 
 	interaction_label.text = ""
