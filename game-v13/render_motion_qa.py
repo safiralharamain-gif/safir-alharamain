@@ -78,7 +78,7 @@ def setup_scene():
     cam.rotation_euler=(Vector((0,0,1.0))-cam.location).to_track_quat('-Z','Y').to_euler()
     bpy.context.scene.camera=cam
     s=bpy.context.scene; s.render.engine='BLENDER_EEVEE_NEXT'
-    s.render.resolution_x=720; s.render.resolution_y=720; s.render.resolution_percentage=100
+    s.render.resolution_x=360; s.render.resolution_y=360; s.render.resolution_percentage=100
     s.render.image_settings.file_format='PNG'
     s.view_settings.look='AgX - Medium High Contrast'
     return cam
