@@ -1,0 +1,70 @@
+name: Export Hajj Umrah Game V13 Source
+
+on:
+  push:
+    branches:
+      - hajj-umrah-game-v13
+    paths:
+      - ".github/workflows/export-game-v13-source.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+
+      - name: Package editable Godot source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf source_package dist
+          mkdir -p source_package/game-v13 source_package/game-v12/audio dist
+          cp -a game-v13/. source_package/game-v13/
+          cp -a game-v12/audio/. source_package/game-v12/audio/
+          mkdir -p source_package/.github/workflows
+          cp .github/workflows/build-hajj-umrah-v13.yml source_package/.github/workflows/
+          cat > source_package/README_SOURCE.txt <<'EOF'
+Hajj & Umrah Training Game V13 - Editable Godot Source
+
+Main editable project:
+  game-v13/project.godot
+  game-v13/main.gd
+  game-v13/main.tscn
+
+Character / movement / ihram source:
+  game-v13/fix_animations.py
+  game-v13/add_ihram.py
+  game-v13/measure_walk.py
+
+Miqat / route / vehicles source:
+  game-v13/build_miqat.py
+  game-v13/build_bus.py
+  game-v13/build_car.py
+
+Build pipeline:
+  .github/workflows/build-hajj-umrah-v13.yml
+
+Talbiyah audio source chunks:
+  game-v12/audio/
+
+Important:
+The GLB character, ihram, NPC, miqat and vehicle files are generated during the GitHub Actions build.
+The Windows EXE is an export; edit the files above instead of decompiling main.gdc.
+EOF
+          cd source_package
+          zip -r ../dist/game-v13-editable-source.zip .
+          cd ..
+          test -s dist/game-v13-editable-source.zip
+
+      - name: Upload editable source ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hajj-Umrah-Game-V13-Editable-Source
+          path: dist/game-v13-editable-source.zip
+          if-no-files-found: error
+          compression-level: 0
