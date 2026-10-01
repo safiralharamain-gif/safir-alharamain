@@ -111,25 +111,38 @@ def set_target_pitch(obj,rest_q,angle,frame):
     obj.keyframe_insert("rotation_quaternion",frame=frame)
 
 def finger_relax(action,frames):
-    # MakeHuman game-engine rig uses local Z as the anatomical finger curl axis.
+    # Replace baked starfish finger channels with a constant relaxed curl.
+    # Using quaternion channels avoids Euler/quaternion conflicts after NLA bake.
     arm.animation_data.action=action
-    curl={"01":-0.16,"02":-0.30,"03":-0.22}
-    for fr in frames:
-        bpy.context.scene.frame_set(fr)
-        for side in ("l","r"):
-            for finger in ("index","middle","ring","pinky"):
-                for seg,ang in curl.items():
-                    bn=f"{finger}_{seg}_{side}"
-                    if bn in pb:
-                        pb[bn].rotation_mode='XYZ'
-                        pb[bn].rotation_euler=(0.0,0.0,ang)
-                        pb[bn].keyframe_insert("rotation_euler",frame=fr)
-            for seg,ang in (("01",-0.055),("02",-0.10),("03",-0.075)):
-                bn=f"thumb_{seg}_{side}"
-                if bn in pb:
-                    pb[bn].rotation_mode='XYZ'
-                    pb[bn].rotation_euler=(0.0,0.0,ang)
-                    pb[bn].keyframe_insert("rotation_euler",frame=fr)
+    frame_start=int(min(frames)); frame_end=int(max(frames))
+    curl={"01":-0.13,"02":-0.26,"03":-0.19}
+    thumb={"01":-0.045,"02":-0.085,"03":-0.060}
+    names=[]
+    for side in ("l","r"):
+        for finger in ("index","middle","ring","pinky"):
+            for seg,ang in curl.items():
+                names.append((f"{finger}_{seg}_{side}",ang))
+        for seg,ang in thumb.items():
+            names.append((f"thumb_{seg}_{side}",ang))
+
+    for bn,ang in names:
+        if bn not in pb:
+            continue
+        # Remove every baked rotation channel for this finger bone.
+        paths={
+            f'pose.bones["{bn}"].rotation_quaternion',
+            f'pose.bones["{bn}"].rotation_euler',
+            f'pose.bones["{bn}"].rotation_axis_angle',
+        }
+        for fc in list(action.fcurves):
+            if fc.data_path in paths:
+                action.fcurves.remove(fc)
+        pb[bn].rotation_mode='QUATERNION'
+        q=Quaternion(Vector((0.0,0.0,1.0)),ang)
+        pb[bn].rotation_quaternion=q
+        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_start)
+        pb[bn].rotation_quaternion=q
+        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_end)
     arm.animation_data.action=None
 
 def build_constraints(prefix):
@@ -179,9 +192,9 @@ right_sign=-left_sign
 
 # Put the hands beside the thighs instead of reusing the T-pose wrist positions.
 hand_side=H*0.020
-hand_drop=H*0.140
-idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y-H*0.015, hipL.z-hand_drop))
-idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y-H*0.015, hipR.z-hand_drop))
+hand_drop=H*0.095
+idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y-H*0.020, hipL.z-hand_drop))
+idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y-H*0.020, hipR.z-hand_drop))
 pole_out=H*0.038
 pole_back=H*0.022
 idle_eL=Vector((shoulderL.x+left_sign*pole_out, shoulderL.y+pole_back, shoulderL.z-H*0.095))
@@ -253,7 +266,7 @@ rest_foot_rot_L=prepare_target_rotation(fL)
 rest_foot_rot_R=prepare_target_rotation(fR)
 
 # Arms swing opposite the legs, but hands stay close to the torso.
-hand_swing=H*0.045
+hand_swing=H*0.055
 for fr,ly,ry,llift,rlift,bob in phases:
     lf=base_footL + Vector((0.0,ly,llift))
     rf=base_footR + Vector((0.0,ry,rlift))
@@ -269,7 +282,7 @@ for fr,ly,ry,llift,rlift,bob in phases:
     # Contralateral arm swing.
     larm_y = -ly/step * hand_swing
     rarm_y = -ry/step * hand_swing
-    arm_lift=H*0.006*max(abs(larm_y),abs(rarm_y))/max(hand_swing,1e-6)
+    arm_lift=H*0.010*max(abs(larm_y),abs(rarm_y))/max(hand_swing,1e-6)
     lh=idle_hL + Vector((0.0,larm_y,arm_lift))
     rh=idle_hR + Vector((0.0,rarm_y,arm_lift))
     set_target_local(hL,lh,fr); set_target_local(hR,rh,fr)
@@ -278,10 +291,10 @@ for fr,ly,ry,llift,rlift,bob in phases:
 
     # Shift weight slightly toward the planted leg, with subtle counter-rotation.
     support = left_sign if llift <= rlift else right_sign
-    side_shift = support * H*0.006
+    side_shift = support * H*0.004
     pb[pelvis].location=(side_shift,0.0,bob)
     pb[pelvis].keyframe_insert("location",frame=fr)
-    yaw = math.radians(1.8) * (-ly/step)
+    yaw = math.radians(1.2) * (-ly/step)
     set_bone_axis_angle(pelvis,(0,0,1),yaw,fr)
     if spine:
         set_bone_axis_angle(spine,(0,0,1),-yaw*0.70,fr)
