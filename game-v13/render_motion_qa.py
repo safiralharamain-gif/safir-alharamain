@@ -22,7 +22,7 @@ def get_action(prefix):
     return next((a for a in bpy.data.actions if a.name.lower().startswith(prefix)),None)
 
 def pos(arm,bone):
-    return arm.matrix_world @ arm.pose.bones[bone].head
+    return arm.matrix_world @ arm.pose.bones[bone].matrix.translation
 
 def validate_pose(arm,label):
     bpy.context.view_layer.update()
