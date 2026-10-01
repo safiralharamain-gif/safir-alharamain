@@ -76,13 +76,7 @@ jobs:
           unzip -q beards.zip -d beard_assets
           curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
           curl -fL "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/animations/walks/walk1.bvh" -o walk1.bvh
-          python3 -c 'import pathlib,re; p=pathlib.Path("make-human.py"); s=p.read_text(encoding="utf-8"); new="""BVH_MAP = {
-    "pelvis": "Hips", "spine_01": "Spine1", "spine_02": "Spine2", "spine_03": "Spine3", "neck_01": "Neck", "head": "Head",
-    "clavicle_l": "Clavicle_L", "upperarm_l": "UpArm_L", "lowerarm_l": "LoArm_L", "hand_l": "Hand_L",
-    "clavicle_r": "Clavicle_R", "upperarm_r": "UpArm_R", "lowerarm_r": "LoArm_R", "hand_r": "Hand_R",
-    "thigh_l": "UpLeg_L", "calf_l": "LoLeg_L", "foot_l": "Foot_L", "ball_l": "Toe_L",
-    "thigh_r": "UpLeg_R", "calf_r": "LoLeg_R", "foot_r": "Foot_R", "ball_r": "Toe_R",
-}"""; s,n=re.subn(r"BVH_MAP = \{.*?\n\}", new, s, count=1, flags=re.S); assert n==1, "BVH_MAP block not found"; p.write_text(s,encoding="utf-8")'
+          python3 -c 'import pathlib; p=pathlib.Path("make-human.py"); s=p.read_text(encoding="utf-8"); reps=[("Spine1","Spine3"),("Spine","Spine2"),("LowerBack","Spine1"),("LeftShoulder","Clavicle_L"),("LeftArm","UpArm_L"),("LeftForeArm","LoArm_L"),("LeftHand","Hand_L"),("RightShoulder","Clavicle_R"),("RightArm","UpArm_R"),("RightForeArm","LoArm_R"),("RightHand","Hand_R"),("LeftUpLeg","UpLeg_L"),("LeftLeg","LoLeg_L"),("LeftFoot","Foot_L"),("LeftToeBase","Toe_L"),("RightUpLeg","UpLeg_R"),("RightLeg","LoLeg_R"),("RightFoot","Foot_R"),("RightToeBase","Toe_R")]; [None for a,b in reps if not (s:=s.replace(chr(34)+a+chr(34),chr(34)+b+chr(34)))]; p.write_text(s,encoding="utf-8")'
           grep -A8 "BVH_MAP =" make-human.py
           test -s make-human.py
           test -s walk1.bvh
