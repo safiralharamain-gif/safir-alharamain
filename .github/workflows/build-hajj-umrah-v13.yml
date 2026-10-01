@@ -132,13 +132,13 @@ jobs:
           "$BLENDER" --background --python-exit-code 1 --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/npc_young_raw.glb" "$ASIAN_SKIN" "$H1" "$C1" "$ROOT/build_tools/walk1.bvh" gender=1.0 age=0.34 muscle=0.43 weight=0.40 height=0.49 proportions=0.50 caucasian=0.25 african=0.08 asian=0.67 tex=768
           "$BLENDER" --background --python-exit-code 1 --python "$ROOT/build_tools/make-human.py" -- "$ROOT/build_tools/mpfb2.zip" "$ROOT/build_project/npc_stocky_raw.glb" "$BASE_SKIN" "$H3" "$C2" "$ROOT/build_tools/walk1.bvh" gender=1.0 age=0.58 muscle=0.46 weight=0.74 height=0.52 proportions=0.48 caucasian=0.62 african=0.27 asian=0.11 tex=768
 
-      - name: Use untouched MakeHuman mocap walk for character QA
+      - name: Build anatomical IK walk and relaxed hands
         shell: bash
         run: |
           set -euo pipefail
           ROOT="$PWD"
           for name in player_normal player_ihram npc_older npc_dark npc_young npc_stocky; do
-            cp "$ROOT/build_project/${name}_raw.glb" "$ROOT/build_project/${name}_fixed.glb"
+            "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/fix_animations.py" -- "$ROOT/build_project/${name}_raw.glb" "$ROOT/build_project/${name}_fixed.glb"
           done
 
       - name: Dress dedicated ihram character and pilgrim NPCs
