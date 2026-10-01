@@ -29,7 +29,8 @@ handL=find("hand_l"); handR=find("hand_r")
 thL=find("thigh_l"); thR=find("thigh_r")
 caL=find("calf_l"); caR=find("calf_r")
 footL=find("foot_l"); footR=find("foot_r")
-head=find("head")\nspine=find("spine_02","spine_01")
+head=find("head")
+spine=find("spine_02","spine_01")
 required=[pelvis,uaL,uaR,laL,laR,handL,handR,thL,thR,caL,caR,footL,footR]
 if any(x is None for x in required):
     raise SystemExit("Missing required game-engine rig bones")
