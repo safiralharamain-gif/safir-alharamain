@@ -91,7 +91,7 @@ def clear_pose():
 def finger_relax(action,frames):
     # MakeHuman game-engine rig uses local Z as the anatomical finger curl axis.
     arm.animation_data.action=action
-    curl={"01":-0.20,"02":-0.42,"03":-0.30}
+    curl={"01":-0.30,"02":-0.58,"03":-0.42}
     for fr in frames:
         bpy.context.scene.frame_set(fr)
         for side in ("l","r"):
@@ -102,7 +102,7 @@ def finger_relax(action,frames):
                         pb[bn].rotation_mode='XYZ'
                         pb[bn].rotation_euler=(0.0,0.0,ang)
                         pb[bn].keyframe_insert("rotation_euler",frame=fr)
-            for seg,ang in (("01",-0.08),("02",-0.14),("03",-0.10)):
+            for seg,ang in (("01",-0.12),("02",-0.20),("03",-0.14)):
                 bn=f"thumb_{seg}_{side}"
                 if bn in pb:
                     pb[bn].rotation_mode='XYZ'
@@ -122,7 +122,8 @@ def build_constraints(prefix):
     kR=make_target(prefix+"_KneePoleR")
 
     add_ik(laL,hL,eL); add_ik(laR,hR,eR)
-    add_copy_world_rotation(handL,hL); add_copy_world_rotation(handR,hR)
+    # Let the hands inherit the solved forearm orientation. Keeping the T-pose wrist
+    # rotation in world space was what made the palms look broken/open.
     add_ik(caL,fL,kL); add_ik(caR,fR,kR)
     add_copy_world_rotation(footL,fL); add_copy_world_rotation(footR,fR)
     return hL,hR,fL,fR,eL,eR,kL,kR
@@ -149,15 +150,25 @@ hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Idle")
 wristL=local_head(handL); wristR=local_head(handR)
 ankleL=local_head(footL); ankleR=local_head(footR)
 shoulderL=local_head(uaL); shoulderR=local_head(uaR)
+hipL=local_head(thL); hipR=local_head(thR)
 kneeL=local_head(caL); kneeR=local_head(caR)
+left_sign=1.0 if hipL.x > hipR.x else -1.0
+right_sign=-left_sign
 
-# Hands close to thighs, elbows softly back/out, feet at natural shoulder/hip width.
-idle_hL=wristL + Vector((0.0,0.015,-H*0.015))
-idle_hR=wristR + Vector((0.0,0.015,-H*0.015))
-pole_out=H*0.11
-pole_back=H*0.07
-idle_eL=Vector((shoulderL.x+pole_out, shoulderL.y+pole_back, (shoulderL.z+idle_hL.z)*0.5))
-idle_eR=Vector((shoulderR.x-pole_out, shoulderR.y+pole_back, (shoulderR.z+idle_hR.z)*0.5))
+# Put the hands beside the thighs instead of reusing the T-pose wrist positions.
+hand_side=H*0.045
+hand_drop=H*0.205
+idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y+H*0.010, hipL.z-hand_drop))
+idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y+H*0.010, hipR.z-hand_drop))
+pole_out=H*0.085
+pole_back=H*0.075
+idle_eL=Vector((shoulderL.x+left_sign*pole_out, shoulderL.y+pole_back, shoulderL.z-H*0.115))
+idle_eR=Vector((shoulderR.x+right_sign*pole_out, shoulderR.y+pole_back, shoulderR.z-H*0.115))
+
+# Keep each foot almost directly below its own hip, avoiding the wide-legged stance.
+foot_side=H*0.012
+base_footL=Vector((hipL.x+left_sign*foot_side, ankleL.y, ankleL.z))
+base_footR=Vector((hipR.x+right_sign*foot_side, ankleR.y, ankleR.z))
 knee_forward=H*0.20
 idle_kL=kneeL + Vector((0.0,-knee_forward,0.0))
 idle_kR=kneeR + Vector((0.0,-knee_forward,0.0))
@@ -165,7 +176,7 @@ idle_kR=kneeR + Vector((0.0,-knee_forward,0.0))
 for fr,breathe in ((1,0.0),(30,H*0.003),(60,0.0)):
     set_target_local(hL,idle_hL+Vector((0,0,breathe)),fr)
     set_target_local(hR,idle_hR+Vector((0,0,breathe)),fr)
-    set_target_local(fL,ankleL,fr); set_target_local(fR,ankleR,fr)
+    set_target_local(fL,base_footL,fr); set_target_local(fR,base_footR,fr)
     set_target_local(eL,idle_eL,fr); set_target_local(eR,idle_eR,fr)
     set_target_local(kL,idle_kL,fr); set_target_local(kR,idle_kR,fr)
     pb[pelvis].location=(0.0,0.0,breathe*0.20)
@@ -185,8 +196,8 @@ hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Walk")
 
 # frame, left_y, right_y, left_lift, right_lift, body_bob
 # Negative Y is forward for this MakeHuman asset.
-step=H*0.19
-lift=H*0.055
+step=H*0.145
+lift=H*0.045
 phases=[
     (1,  -step,      step*0.82, 0.000,      0.000,      0.000), # L contact
     (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.010), # down
@@ -200,10 +211,10 @@ phases=[
 ]
 
 # Arms swing opposite the legs, but hands stay close to the torso.
-hand_swing=H*0.075
+hand_swing=H*0.055
 for fr,ly,ry,llift,rlift,bob in phases:
-    lf=ankleL + Vector((0.0,ly,llift))
-    rf=ankleR + Vector((0.0,ry,rlift))
+    lf=base_footL + Vector((0.0,ly,llift))
+    rf=base_footR + Vector((0.0,ry,rlift))
     set_target_local(fL,lf,fr); set_target_local(fR,rf,fr)
 
     # Knee pole follows the leg slightly so the knee bends forward rather than sideways/back.
