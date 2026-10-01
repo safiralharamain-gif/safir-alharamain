@@ -91,7 +91,7 @@ def clear_pose():
 def finger_relax(action,frames):
     # MakeHuman game-engine rig uses local Z as the anatomical finger curl axis.
     arm.animation_data.action=action
-    curl={"01":-0.30,"02":-0.58,"03":-0.42}
+    curl={"01":-0.08,"02":-0.16,"03":-0.11}
     for fr in frames:
         bpy.context.scene.frame_set(fr)
         for side in ("l","r"):
@@ -102,7 +102,7 @@ def finger_relax(action,frames):
                         pb[bn].rotation_mode='XYZ'
                         pb[bn].rotation_euler=(0.0,0.0,ang)
                         pb[bn].keyframe_insert("rotation_euler",frame=fr)
-            for seg,ang in (("01",-0.12),("02",-0.20),("03",-0.14)):
+            for seg,ang in (("01",-0.035),("02",-0.06),("03",-0.04)):
                 bn=f"thumb_{seg}_{side}"
                 if bn in pb:
                     pb[bn].rotation_mode='XYZ'
@@ -156,20 +156,20 @@ left_sign=1.0 if hipL.x > hipR.x else -1.0
 right_sign=-left_sign
 
 # Put the hands beside the thighs instead of reusing the T-pose wrist positions.
-hand_side=H*0.045
-hand_drop=H*0.205
+hand_side=H*0.030
+hand_drop=H*0.195
 idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y+H*0.010, hipL.z-hand_drop))
 idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y+H*0.010, hipR.z-hand_drop))
-pole_out=H*0.085
-pole_back=H*0.075
+pole_out=H*0.060
+pole_back=H*0.045
 idle_eL=Vector((shoulderL.x+left_sign*pole_out, shoulderL.y+pole_back, shoulderL.z-H*0.115))
 idle_eR=Vector((shoulderR.x+right_sign*pole_out, shoulderR.y+pole_back, shoulderR.z-H*0.115))
 
 # Keep each foot almost directly below its own hip, avoiding the wide-legged stance.
-foot_side=H*0.012
+foot_side=H*0.038
 base_footL=Vector((hipL.x+left_sign*foot_side, ankleL.y, ankleL.z))
 base_footR=Vector((hipR.x+right_sign*foot_side, ankleR.y, ankleR.z))
-knee_forward=H*0.20
+knee_forward=H*0.135
 idle_kL=kneeL + Vector((0.0,-knee_forward,0.0))
 idle_kR=kneeR + Vector((0.0,-knee_forward,0.0))
 
@@ -196,8 +196,8 @@ hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Walk")
 
 # frame, left_y, right_y, left_lift, right_lift, body_bob
 # Negative Y is forward for this MakeHuman asset.
-step=H*0.145
-lift=H*0.045
+step=H*0.110
+lift=H*0.032
 phases=[
     (1,  -step,      step*0.82, 0.000,      0.000,      0.000), # L contact
     (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.010), # down
@@ -211,7 +211,7 @@ phases=[
 ]
 
 # Arms swing opposite the legs, but hands stay close to the torso.
-hand_swing=H*0.055
+hand_swing=H*0.032
 for fr,ly,ry,llift,rlift,bob in phases:
     lf=base_footL + Vector((0.0,ly,llift))
     rf=base_footR + Vector((0.0,ry,rlift))
