@@ -1,5 +1,5 @@
-import bpy, os, sys
-from mathutils import Vector, Matrix
+import bpy, os, sys, math
+from mathutils import Vector, Matrix, Quaternion
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 src, out = argv[:2]
@@ -29,7 +29,7 @@ handL=find("hand_l"); handR=find("hand_r")
 thL=find("thigh_l"); thR=find("thigh_r")
 caL=find("calf_l"); caR=find("calf_r")
 footL=find("foot_l"); footR=find("foot_r")
-head=find("head")
+head=find("head")\nspine=find("spine_02","spine_01")
 required=[pelvis,uaL,uaR,laL,laR,handL,handR,thL,thR,caL,caR,footL,footR]
 if any(x is None for x in required):
     raise SystemExit("Missing required game-engine rig bones")
@@ -88,10 +88,31 @@ def clear_pose():
         b.rotation_mode='QUATERNION'
         b.rotation_quaternion=(1,0,0,0)
 
+def local_axis_for_world(bn,axis):
+    v=bones[bn].matrix_local.to_3x3().inverted() @ Vector(axis)
+    v.normalize()
+    return v
+
+def set_bone_axis_angle(bn,world_axis,angle,frame):
+    if not bn:
+        return
+    pb[bn].rotation_mode='QUATERNION'
+    pb[bn].rotation_quaternion=Quaternion(local_axis_for_world(bn,world_axis),angle)
+    pb[bn].keyframe_insert("rotation_quaternion",frame=frame)
+
+def prepare_target_rotation(obj):
+    obj.rotation_mode='QUATERNION'
+    return obj.rotation_quaternion.copy()
+
+def set_target_pitch(obj,rest_q,angle,frame):
+    obj.rotation_mode='QUATERNION'
+    obj.rotation_quaternion=Quaternion(Vector((1.0,0.0,0.0)),angle) @ rest_q
+    obj.keyframe_insert("rotation_quaternion",frame=frame)
+
 def finger_relax(action,frames):
     # MakeHuman game-engine rig uses local Z as the anatomical finger curl axis.
     arm.animation_data.action=action
-    curl={"01":-0.08,"02":-0.16,"03":-0.11}
+    curl={"01":-0.16,"02":-0.30,"03":-0.22}
     for fr in frames:
         bpy.context.scene.frame_set(fr)
         for side in ("l","r"):
@@ -102,7 +123,7 @@ def finger_relax(action,frames):
                         pb[bn].rotation_mode='XYZ'
                         pb[bn].rotation_euler=(0.0,0.0,ang)
                         pb[bn].keyframe_insert("rotation_euler",frame=fr)
-            for seg,ang in (("01",-0.035),("02",-0.06),("03",-0.04)):
+            for seg,ang in (("01",-0.055),("02",-0.10),("03",-0.075)):
                 bn=f"thumb_{seg}_{side}"
                 if bn in pb:
                     pb[bn].rotation_mode='XYZ'
@@ -156,20 +177,20 @@ left_sign=1.0 if hipL.x > hipR.x else -1.0
 right_sign=-left_sign
 
 # Put the hands beside the thighs instead of reusing the T-pose wrist positions.
-hand_side=H*0.030
-hand_drop=H*0.195
-idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y+H*0.010, hipL.z-hand_drop))
-idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y+H*0.010, hipR.z-hand_drop))
-pole_out=H*0.060
-pole_back=H*0.045
-idle_eL=Vector((shoulderL.x+left_sign*pole_out, shoulderL.y+pole_back, shoulderL.z-H*0.115))
-idle_eR=Vector((shoulderR.x+right_sign*pole_out, shoulderR.y+pole_back, shoulderR.z-H*0.115))
+hand_side=H*0.020
+hand_drop=H*0.140
+idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y-H*0.015, hipL.z-hand_drop))
+idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y-H*0.015, hipR.z-hand_drop))
+pole_out=H*0.038
+pole_back=H*0.022
+idle_eL=Vector((shoulderL.x+left_sign*pole_out, shoulderL.y+pole_back, shoulderL.z-H*0.095))
+idle_eR=Vector((shoulderR.x+right_sign*pole_out, shoulderR.y+pole_back, shoulderR.z-H*0.095))
 
 # Keep each foot almost directly below its own hip, avoiding the wide-legged stance.
-foot_side=H*0.038
+foot_side=H*0.005
 base_footL=Vector((hipL.x+left_sign*foot_side, ankleL.y, ankleL.z))
 base_footR=Vector((hipR.x+right_sign*foot_side, ankleR.y, ankleR.z))
-knee_forward=H*0.135
+knee_forward=H*0.120
 idle_kL=kneeL + Vector((0.0,-knee_forward,0.0))
 idle_kR=kneeR + Vector((0.0,-knee_forward,0.0))
 
@@ -181,6 +202,10 @@ for fr,breathe in ((1,0.0),(30,H*0.003),(60,0.0)):
     set_target_local(kL,idle_kL,fr); set_target_local(kR,idle_kR,fr)
     pb[pelvis].location=(0.0,0.0,breathe*0.20)
     pb[pelvis].keyframe_insert("location",frame=fr)
+    if spine:
+        set_bone_axis_angle(spine,(1,0,0),math.radians(1.5),fr)
+    if head:
+        set_bone_axis_angle(head,(1,0,0),math.radians(-0.8),fr)
 
 idle=bake_action("idle",1,60)
 finger_relax(idle,(1,30,60))
@@ -196,8 +221,8 @@ hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Walk")
 
 # frame, left_y, right_y, left_lift, right_lift, body_bob
 # Negative Y is forward for this MakeHuman asset.
-step=H*0.110
-lift=H*0.032
+step=H*0.105
+lift=H*0.028
 phases=[
     (1,  -step,      step*0.82, 0.000,      0.000,      0.000), # L contact
     (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.010), # down
@@ -210,12 +235,31 @@ phases=[
     (33, -step,      step*0.82,  0.000,      0.000,      0.000), # loop
 ]
 
+# Calm heel-strike -> flat -> toe-off roll, matching a normal slow walk.
+# Negative pitch lifts the toe; positive pitch gives toe-off.
+foot_pitch = {
+    1:(math.radians(-7), math.radians(11)),
+    5:(0.0, math.radians(6)),
+    9:(0.0, math.radians(-4)),
+    13:(math.radians(9), math.radians(-6)),
+    17:(math.radians(11), math.radians(-7)),
+    21:(math.radians(6), 0.0),
+    25:(math.radians(-4), 0.0),
+    29:(math.radians(-6), math.radians(9)),
+    33:(math.radians(-7), math.radians(11)),
+}
+rest_foot_rot_L=prepare_target_rotation(fL)
+rest_foot_rot_R=prepare_target_rotation(fR)
+
 # Arms swing opposite the legs, but hands stay close to the torso.
-hand_swing=H*0.032
+hand_swing=H*0.045
 for fr,ly,ry,llift,rlift,bob in phases:
     lf=base_footL + Vector((0.0,ly,llift))
     rf=base_footR + Vector((0.0,ry,rlift))
     set_target_local(fL,lf,fr); set_target_local(fR,rf,fr)
+    lp,rp=foot_pitch[fr]
+    set_target_pitch(fL,rest_foot_rot_L,lp,fr)
+    set_target_pitch(fR,rest_foot_rot_R,rp,fr)
 
     # Knee pole follows the leg slightly so the knee bends forward rather than sideways/back.
     set_target_local(kL,Vector((kneeL.x,kneeL.y-knee_forward+ly*0.12,kneeL.z+llift*0.20)),fr)
@@ -224,14 +268,24 @@ for fr,ly,ry,llift,rlift,bob in phases:
     # Contralateral arm swing.
     larm_y = -ly/step * hand_swing
     rarm_y = -ry/step * hand_swing
-    lh=idle_hL + Vector((0.0,larm_y,0.0))
-    rh=idle_hR + Vector((0.0,rarm_y,0.0))
+    arm_lift=H*0.006*max(abs(larm_y),abs(rarm_y))/max(hand_swing,1e-6)
+    lh=idle_hL + Vector((0.0,larm_y,arm_lift))
+    rh=idle_hR + Vector((0.0,rarm_y,arm_lift))
     set_target_local(hL,lh,fr); set_target_local(hR,rh,fr)
-    set_target_local(eL,Vector((idle_eL.x,idle_eL.y+larm_y*0.30,idle_eL.z)),fr)
-    set_target_local(eR,Vector((idle_eR.x,idle_eR.y+rarm_y*0.30,idle_eR.z)),fr)
+    set_target_local(eL,Vector((idle_eL.x,idle_eL.y+larm_y*0.52,idle_eL.z+arm_lift*0.35)),fr)
+    set_target_local(eR,Vector((idle_eR.x,idle_eR.y+rarm_y*0.52,idle_eR.z+arm_lift*0.35)),fr)
 
-    pb[pelvis].location=(0.0,0.0,bob)
+    # Shift weight slightly toward the planted leg, with subtle counter-rotation.
+    support = left_sign if llift <= rlift else right_sign
+    side_shift = support * H*0.006
+    pb[pelvis].location=(side_shift,0.0,bob)
     pb[pelvis].keyframe_insert("location",frame=fr)
+    yaw = math.radians(1.8) * (-ly/step)
+    set_bone_axis_angle(pelvis,(0,0,1),yaw,fr)
+    if spine:
+        set_bone_axis_angle(spine,(0,0,1),-yaw*0.70,fr)
+    if head:
+        set_bone_axis_angle(head,(0,0,1),yaw*0.15,fr)
 
 walk=bake_action("walk",1,33)
 finger_relax(walk,(1,5,9,13,17,21,25,29,33))
