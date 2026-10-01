@@ -106,14 +106,16 @@ def render_character(path,clip,frame,name,view="front"):
 clear(); arm,_=import_char(normal_path); walk=get_action("walk")
 if walk is None: raise RuntimeError("No walk action")
 f0=int(round(walk.frame_range[0])); f1=int(round(walk.frame_range[1])); span=max(1,f1-f0)
-frames=[f0,f0+span//4,f0+span//2,f0+3*span//4]
-for i,fr in enumerate(frames):
+frames8=[f0 + (span*i)//8 for i in range(8)]
+frames4=[frames8[i] for i in (0,2,4,6)]
+for i,fr in enumerate(frames4):
     render_character(normal_path,"walk",fr,f"walk_{i}")
+for i,fr in enumerate(frames8):
     render_character(normal_path,"walk",fr,f"walk_side_{i}",view="side")
 render_character(normal_path,"idle",1,"idle_front")
 render_character(normal_path,"idle",1,"idle_side",view="side")
 render_character(ihram_path,"idle",1,"ihram_front")
 render_character(ihram_path,"idle",1,"ihram_back",view="back")
-render_character(npc_path,"walk",frames[1],"npc_walk")
+render_character(npc_path,"walk",frames8[2],"npc_walk")
 
 print("V14_MOTION_QA_RENDERED",out_dir)
