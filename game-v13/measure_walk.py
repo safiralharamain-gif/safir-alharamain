@@ -26,9 +26,9 @@ samples={"foot_l":[],"foot_r":[]}
 for fr in range(f0,f1+1):
     bpy.context.scene.frame_set(fr)
     bpy.context.view_layer.update()
-    pel=(arm.matrix_world @ pb["pelvis"].head)
+    pel=(arm.matrix_world @ pb["pelvis"].matrix.translation)
     for n in ("foot_l","foot_r"):
-        p=(arm.matrix_world @ pb[n].head)-pel
+        p=(arm.matrix_world @ pb[n].matrix.translation)-pel
         samples[n].append((fr,p.x,p.y,p.z))
 
 # Determine horizontal forward axis by larger foot excursion.
