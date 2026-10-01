@@ -86,7 +86,10 @@ def render_character(path,clip,frame,name,back=False):
     arm,objs=import_char(path)
     act=get_action(clip)
     if act is None: raise RuntimeError("Missing "+clip+" in "+path)
-    arm.animation_data_create(); arm.animation_data.action=act
+    arm.animation_data_create()
+    for tr in list(arm.animation_data.nla_tracks):
+        arm.animation_data.nla_tracks.remove(tr)
+    arm.animation_data.action=act
     bpy.context.scene.frame_set(frame)
     validate_pose(arm,name)
     cam=setup_scene()
