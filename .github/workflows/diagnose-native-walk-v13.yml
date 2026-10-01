@@ -1,0 +1,90 @@
+name: Diagnose Native Walk V13
+
+on:
+  push:
+    branches:
+      - hajj-umrah-game-v13
+    paths:
+      - "game-v13/render_native_walk.py"
+      - ".github/workflows/diagnose-native-walk-v13.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-walk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip xz-utils libgl1 libegl1 libx11-6 libxkbcommon0 libxcursor1 libxinerama1 libxi6 libxrandr2
+
+      - name: Download Blender
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build_tools
+          cd build_tools
+          BASE="https://download.blender.org/release/Blender4.5/"
+          INDEX="$(curl -fsSL "$BASE")"
+          FILE="$(printf '%s' "$INDEX" | grep -oE 'blender-4\.5\.[0-9]+-linux-x64\.tar\.xz' | sort -V | tail -n1)"
+          curl -fL "${BASE}${FILE}" -o blender.tar.xz
+          tar -xf blender.tar.xz
+          BLENDER="$(find "$PWD" -maxdepth 2 -type f -name blender | head -n1)"
+          chmod +x "$BLENDER"
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Download MakeHuman assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build_tools
+          curl -fL "https://files.makehumancommunity.org/plugins/mpfb2-latest.zip" -o mpfb2.zip
+          curl -fL "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip" -o makehuman_assets.zip
+          curl -fL "https://files2.makehumancommunity.org/asset_packs/bodyparts05/bodyparts05_cc0.zip" -o beards.zip
+          mkdir -p makehuman_assets beard_assets
+          unzip -q makehuman_assets.zip -d makehuman_assets
+          unzip -q beards.zip -d beard_assets
+          curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
+          curl -fL "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/animations/walks/walk1.bvh" -o walk1.bvh
+
+      - name: Resolve assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          SYS="$PWD/build_tools/makehuman_assets"
+          BEARDS="$PWD/build_tools/beard_assets"
+          BASE_SKIN="$(find "$SYS" -type f -name 'young_caucasian_male.mhmat' -print -quit)"
+          H1="$(find "$SYS" -type f -name 'short01.mhclo' -print -quit)"
+          BEARD="$(find "$BEARDS" -type f -iname 'wdg_scruffy_beard.mhclo' -print -quit)"
+          C3="$(find "$SYS" -type f -iname 'male_casualsuit03.mhclo' -print -quit)"
+          echo "BASE_SKIN=$BASE_SKIN" >> "$GITHUB_ENV"
+          echo "H1=$H1" >> "$GITHUB_ENV"
+          echo "BEARD=$BEARD" >> "$GITHUB_ENV"
+          echo "C3=$C3" >> "$GITHUB_ENV"
+
+      - name: Generate raw character with native retargeted walk
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p native_preview
+          ROOT="$PWD"
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/build_tools/make-human.py" --             "$ROOT/build_tools/mpfb2.zip" "$ROOT/native_player.glb"             "$BASE_SKIN" "$H1" "$BEARD" "$C3" "$ROOT/build_tools/walk1.bvh"             gender=1.0 age=0.47 muscle=0.58 weight=0.50 height=0.56 proportions=0.57 caucasian=0.64 african=0.26 asian=0.10 tex=768
+
+      - name: Render native walk front and side
+        shell: bash
+        run: |
+          "$BLENDER" --background --python-exit-code 1 --python "$PWD/game-v13/render_native_walk.py" --             "$PWD/native_player.glb" "$PWD/native_preview"
+
+      - name: Upload native walk preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: Native-Walk-V13-Preview
+          path: native_preview/*.png
+          if-no-files-found: error
+          compression-level: 0
