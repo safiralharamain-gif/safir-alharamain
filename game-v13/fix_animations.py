@@ -115,8 +115,8 @@ def finger_relax(action,frames):
     # Using quaternion channels avoids Euler/quaternion conflicts after NLA bake.
     arm.animation_data.action=action
     frame_start=int(min(frames)); frame_end=int(max(frames))
-    curl={"01":-0.13,"02":-0.26,"03":-0.19}
-    thumb={"01":-0.045,"02":-0.085,"03":-0.060}
+    curl={"01":-0.24,"02":-0.48,"03":-0.34}
+    thumb={"01":-0.075,"02":-0.14,"03":-0.10}
     names=[]
     for side in ("l","r"):
         for finger in ("index","middle","ring","pinky"):
@@ -192,9 +192,9 @@ right_sign=-left_sign
 
 # Put the hands beside the thighs instead of reusing the T-pose wrist positions.
 hand_side=H*0.020
-hand_drop=H*0.095
-idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y-H*0.020, hipL.z-hand_drop))
-idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y-H*0.020, hipR.z-hand_drop))
+hand_drop=H*0.060
+idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y-H*0.024, hipL.z-hand_drop))
+idle_hR=Vector((hipR.x + right_sign*hand_side, hipR.y-H*0.024, hipR.z-hand_drop))
 pole_out=H*0.038
 pole_back=H*0.022
 idle_eL=Vector((shoulderL.x+left_sign*pole_out, shoulderL.y+pole_back, shoulderL.z-H*0.095))
@@ -235,17 +235,17 @@ hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Walk")
 
 # frame, left_y, right_y, left_lift, right_lift, body_bob
 # Negative Y is forward for this MakeHuman asset.
-step=H*0.105
-lift=H*0.028
+step=H*0.120
+lift=H*0.038
 phases=[
     (1,  -step,      step*0.82, 0.000,      0.000,      0.000), # L contact
-    (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.010), # down
-    (9,  -step*0.22, 0.000,     0.000,      lift*0.72,  H*0.002), # R passing
-    (13,  step*0.38,-step*0.62,  0.000,      lift,       H*0.010), # R swing/up
+    (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.015), # down
+    (9,  -step*0.22, 0.000,     0.000,      lift*0.72,  H*0.001), # R passing
+    (13,  step*0.38,-step*0.62,  0.000,      lift,       H*0.008), # R swing/up
     (17,  step*0.82,-step,       0.000,      0.000,      0.000), # R contact
-    (21,  step*0.55,-step*0.78,  0.000,      0.000,     -H*0.010), # down
-    (25,  0.000,    -step*0.22,  lift*0.72,  0.000,      H*0.002), # L passing
-    (29, -step*0.62, step*0.38,  lift,       0.000,      H*0.010), # L swing/up
+    (21,  step*0.55,-step*0.78,  0.000,      0.000,     -H*0.015), # down
+    (25,  0.000,    -step*0.22,  lift*0.72,  0.000,      H*0.001), # L passing
+    (29, -step*0.62, step*0.38,  lift,       0.000,      H*0.008), # L swing/up
     (33, -step,      step*0.82,  0.000,      0.000,      0.000), # loop
 ]
 
@@ -266,7 +266,7 @@ rest_foot_rot_L=prepare_target_rotation(fL)
 rest_foot_rot_R=prepare_target_rotation(fR)
 
 # Arms swing opposite the legs, but hands stay close to the torso.
-hand_swing=H*0.055
+hand_swing=H*0.075
 for fr,ly,ry,llift,rlift,bob in phases:
     lf=base_footL + Vector((0.0,ly,llift))
     rf=base_footR + Vector((0.0,ry,rlift))
@@ -297,9 +297,17 @@ for fr,ly,ry,llift,rlift,bob in phases:
     yaw = math.radians(1.2) * (-ly/step)
     set_bone_axis_angle(pelvis,(0,0,1),yaw,fr)
     if spine:
-        set_bone_axis_angle(spine,(0,0,1),-yaw*0.70,fr)
+        ax=local_axis_for_world(spine,(1,0,0))
+        az=local_axis_for_world(spine,(0,0,1))
+        pb[spine].rotation_mode='QUATERNION'
+        pb[spine].rotation_quaternion=Quaternion(az,-yaw*0.70) @ Quaternion(ax,math.radians(2.2))
+        pb[spine].keyframe_insert("rotation_quaternion",frame=fr)
     if head:
-        set_bone_axis_angle(head,(0,0,1),yaw*0.15,fr)
+        axh=local_axis_for_world(head,(1,0,0))
+        azh=local_axis_for_world(head,(0,0,1))
+        pb[head].rotation_mode='QUATERNION'
+        pb[head].rotation_quaternion=Quaternion(azh,yaw*0.15) @ Quaternion(axh,math.radians(-1.1))
+        pb[head].keyframe_insert("rotation_quaternion",frame=fr)
 
 walk=bake_action("walk",1,33)
 finger_relax(walk,(1,5,9,13,17,21,25,29,33))
