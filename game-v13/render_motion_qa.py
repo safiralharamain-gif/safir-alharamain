@@ -81,7 +81,7 @@ def setup_scene():
     s.view_settings.look='AgX - Medium High Contrast'
     return cam
 
-def render_character(path,clip,frame,name,back=False):
+def render_character(path,clip,frame,name,view="front"):
     clear()
     arm,objs=import_char(path)
     act=get_action(clip)
@@ -93,8 +93,12 @@ def render_character(path,clip,frame,name,back=False):
     bpy.context.scene.frame_set(frame)
     validate_pose(arm,name)
     cam=setup_scene()
-    if back:
+    if view=="back":
         cam.location=(-2.0,4.5,1.85)
+        cam.rotation_euler=(Vector((0,0,0.95))-cam.location).to_track_quat('-Z','Y').to_euler()
+    elif view=="side":
+        cam.location=(4.7,0.0,1.75)
+        cam.data.lens=62
         cam.rotation_euler=(Vector((0,0,0.95))-cam.location).to_track_quat('-Z','Y').to_euler()
     bpy.context.scene.render.filepath=os.path.join(out_dir,name+".png")
     bpy.ops.render.render(write_still=True)
@@ -105,9 +109,11 @@ f0=int(round(walk.frame_range[0])); f1=int(round(walk.frame_range[1])); span=max
 frames=[f0,f0+span//4,f0+span//2,f0+3*span//4]
 for i,fr in enumerate(frames):
     render_character(normal_path,"walk",fr,f"walk_{i}")
+    render_character(normal_path,"walk",fr,f"walk_side_{i}",view="side")
 render_character(normal_path,"idle",1,"idle_front")
+render_character(normal_path,"idle",1,"idle_side",view="side")
 render_character(ihram_path,"idle",1,"ihram_front")
-render_character(ihram_path,"idle",1,"ihram_back",True)
+render_character(ihram_path,"idle",1,"ihram_back",view="back")
 render_character(npc_path,"walk",frames[1],"npc_walk")
 
 print("V14_MOTION_QA_RENDERED",out_dir)
