@@ -11,7 +11,10 @@ arm=next((o for o in bpy.data.objects if o.type=='ARMATURE'),None)
 if arm is None: raise SystemExit("No armature")
 walk=next((a for a in bpy.data.actions if a.name.lower().startswith("walk")),None)
 if walk is None: raise SystemExit("No walk action")
-arm.animation_data_create(); arm.animation_data.action=walk
+arm.animation_data_create()
+for tr in list(arm.animation_data.nla_tracks):
+    arm.animation_data.nla_tracks.remove(tr)
+arm.animation_data.action=walk
 
 pb=arm.pose.bones
 for n in ("foot_l","foot_r","pelvis"):
