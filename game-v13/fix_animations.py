@@ -115,8 +115,8 @@ def finger_relax(action,frames):
     # Using quaternion channels avoids Euler/quaternion conflicts after NLA bake.
     arm.animation_data.action=action
     frame_start=int(min(frames)); frame_end=int(max(frames))
-    curl={"01":-0.24,"02":-0.48,"03":-0.34}
-    thumb={"01":-0.075,"02":-0.14,"03":-0.10}
+    curl={"01":-0.16,"02":-0.28,"03":-0.20}
+    thumb={"01":-0.05,"02":-0.08,"03":-0.06}
     names=[]
     for side in ("l","r"):
         for finger in ("index","middle","ring","pinky"):
@@ -235,38 +235,38 @@ hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Walk")
 
 # frame, left_y, right_y, left_lift, right_lift, body_bob
 # Negative Y is forward for this MakeHuman asset.
-step=H*0.120
-lift=H*0.038
+step=H*0.095
+lift=H*0.026
 phases=[
     (1,  -step,      step*0.82, 0.000,      0.000,      0.000), # L contact
-    (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.015), # down
+    (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.004), # down
     (9,  -step*0.22, 0.000,     0.000,      lift*0.72,  H*0.001), # R passing
-    (13,  step*0.38,-step*0.62,  0.000,      lift,       H*0.008), # R swing/up
+    (13,  step*0.38,-step*0.62,  0.000,      lift,       H*0.004), # R swing/up
     (17,  step*0.82,-step,       0.000,      0.000,      0.000), # R contact
-    (21,  step*0.55,-step*0.78,  0.000,      0.000,     -H*0.015), # down
+    (21,  step*0.55,-step*0.78,  0.000,      0.000,     -H*0.004), # down
     (25,  0.000,    -step*0.22,  lift*0.72,  0.000,      H*0.001), # L passing
-    (29, -step*0.62, step*0.38,  lift,       0.000,      H*0.008), # L swing/up
+    (29, -step*0.62, step*0.38,  lift,       0.000,      H*0.004), # L swing/up
     (33, -step,      step*0.82,  0.000,      0.000,      0.000), # loop
 ]
 
 # Calm heel-strike -> flat -> toe-off roll, matching a normal slow walk.
 # Negative pitch lifts the toe; positive pitch gives toe-off.
 foot_pitch = {
-    1:(math.radians(-7), math.radians(11)),
-    5:(0.0, math.radians(6)),
-    9:(0.0, math.radians(-4)),
-    13:(math.radians(9), math.radians(-6)),
-    17:(math.radians(11), math.radians(-7)),
-    21:(math.radians(6), 0.0),
-    25:(math.radians(-4), 0.0),
-    29:(math.radians(-6), math.radians(9)),
-    33:(math.radians(-7), math.radians(11)),
+    1:(math.radians(-5), math.radians(7)),
+    5:(0.0, math.radians(4)),
+    9:(0.0, math.radians(-3)),
+    13:(math.radians(6), math.radians(-4)),
+    17:(math.radians(7), math.radians(-5)),
+    21:(math.radians(4), 0.0),
+    25:(math.radians(-3), 0.0),
+    29:(math.radians(-4), math.radians(6)),
+    33:(math.radians(-5), math.radians(7)),
 }
 rest_foot_rot_L=prepare_target_rotation(fL)
 rest_foot_rot_R=prepare_target_rotation(fR)
 
 # Arms swing opposite the legs, but hands stay close to the torso.
-hand_swing=H*0.075
+hand_swing=H*0.038
 for fr,ly,ry,llift,rlift,bob in phases:
     lf=base_footL + Vector((0.0,ly,llift))
     rf=base_footR + Vector((0.0,ry,rlift))
@@ -282,7 +282,7 @@ for fr,ly,ry,llift,rlift,bob in phases:
     # Contralateral arm swing.
     larm_y = -ly/step * hand_swing
     rarm_y = -ry/step * hand_swing
-    arm_lift=H*0.010*max(abs(larm_y),abs(rarm_y))/max(hand_swing,1e-6)
+    arm_lift=H*0.004*max(abs(larm_y),abs(rarm_y))/max(hand_swing,1e-6)
     lh=idle_hL + Vector((0.0,larm_y,arm_lift))
     rh=idle_hR + Vector((0.0,rarm_y,arm_lift))
     set_target_local(hL,lh,fr); set_target_local(hR,rh,fr)
@@ -291,22 +291,22 @@ for fr,ly,ry,llift,rlift,bob in phases:
 
     # Shift weight slightly toward the planted leg, with subtle counter-rotation.
     support = left_sign if llift <= rlift else right_sign
-    side_shift = support * H*0.004
+    side_shift = support * H*0.0025
     pb[pelvis].location=(side_shift,0.0,bob)
     pb[pelvis].keyframe_insert("location",frame=fr)
-    yaw = math.radians(1.2) * (-ly/step)
+    yaw = math.radians(0.6) * (-ly/step)
     set_bone_axis_angle(pelvis,(0,0,1),yaw,fr)
     if spine:
         ax=local_axis_for_world(spine,(1,0,0))
         az=local_axis_for_world(spine,(0,0,1))
         pb[spine].rotation_mode='QUATERNION'
-        pb[spine].rotation_quaternion=Quaternion(az,-yaw*0.70) @ Quaternion(ax,math.radians(2.2))
+        pb[spine].rotation_quaternion=Quaternion(az,-yaw*0.70) @ Quaternion(ax,math.radians(1.2))
         pb[spine].keyframe_insert("rotation_quaternion",frame=fr)
     if head:
         axh=local_axis_for_world(head,(1,0,0))
         azh=local_axis_for_world(head,(0,0,1))
         pb[head].rotation_mode='QUATERNION'
-        pb[head].rotation_quaternion=Quaternion(azh,yaw*0.15) @ Quaternion(axh,math.radians(-1.1))
+        pb[head].rotation_quaternion=Quaternion(azh,yaw*0.15) @ Quaternion(axh,math.radians(-0.4))
         pb[head].keyframe_insert("rotation_quaternion",frame=fr)
 
 walk=bake_action("walk",1,33)
