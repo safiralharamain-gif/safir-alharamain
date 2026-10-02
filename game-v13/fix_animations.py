@@ -220,7 +220,7 @@ relax_fingers(idle, 1, 60)
 # Remove BVH helper armature + its action after retarget.
 raw_bvh_action = src_action
 bpy.data.objects.remove(src, do_unlink=True)
-if raw_bvh_action in bpy.data.actions:
+if raw_bvh_action and raw_bvh_action.name in bpy.data.actions:
     bpy.data.actions.remove(raw_bvh_action)
 
 # Keep exactly idle + walk in NLA so Godot imports both clips.
