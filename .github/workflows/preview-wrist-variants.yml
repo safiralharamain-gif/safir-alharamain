@@ -1,0 +1,99 @@
+name: Preview Wrist Direction Variants
+
+on:
+  push:
+    branches:
+      - hajj-umrah-game-v13
+    paths:
+      - "game-v13/fix_animations.py"
+      - "game-v13/render_wrist_variant.py"
+      - ".github/workflows/preview-wrist-variants.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip xz-utils libgl1 libegl1 libx11-6 libxkbcommon0 libxcursor1 libxinerama1 libxi6 libxrandr2
+
+      - name: Download Blender
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools out
+          cd tools
+          BASE="https://download.blender.org/release/Blender4.5/"
+          INDEX="$(curl -fsSL "$BASE"))"
+          FILE="$(printf '%s' "$INDEX" | grep -oE 'blender-4\\.5\\.[0-9]+-linux-x64\\.tar\\.xz' | sort -V | tail -n1)"
+          curl -fL "${BASE}${FILE}" -o blender.tar.xz
+          tar -xf blender.tar.xz
+          BLENDER="$(find "$PWD" -maxdepth 2 -type f -name blender | head -n1)"
+          chmod +x "$BLENDER"
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Download MakeHuman assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd tools
+          curl -fL "https://files.makehumancommunity.org/plugins/mpfb2-latest.zip" -o mpfb2.zip
+          curl -fL "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip" -o makehuman_assets.zip
+          curl -fL "https://files2.makehumancommunity.org/asset_packs/bodyparts05/bodyparts05_cc0.zip" -o beards.zip
+          mkdir -p makehuman_assets beard_assets
+          unzip -q makehuman_assets.zip -d makehuman_assets
+          unzip -q beards.zip -d beard_assets
+          curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
+          BASE_SKIN="$(find makehuman_assets -type f -name 'young_caucasian_male.mhmat' -print -quit)"
+          H1="$(find makehuman_assets -type f -name 'short01.mhclo' -print -quit)"
+          BEARD="$(find beard_assets -type f -iname 'wdg_scruffy_beard.mhclo' -print -quit)"
+          [ -n "$BEARD" ] || BEARD="$(find beard_assets -type f -iname '*beard*.mhclo' -print -quit)"
+          C3="$(find makehuman_assets -type f -iname 'male_casualsuit03.mhclo' -print -quit)"
+          test -n "$BASE_SKIN"; test -n "$H1"; test -n "$BEARD"; test -n "$C3"
+          {
+            echo "BASE_SKIN=$PWD/$BASE_SKIN"
+            echo "H1=$PWD/$H1"
+            echo "BEARD=$PWD/$BEARD"
+            echo "C3=$PWD/$C3"
+          } >> "$GITHUB_ENV"
+
+      - name: Generate player
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          COMMON=("gender=1.0" "age=0.47" "muscle=0.58" "weight=0.50" "height=0.56" "proportions=0.57" "caucasian=0.64" "african=0.26" "asian=0.10" "tex=768")
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/tools/make-human.py" -- "$ROOT/tools/mpfb2.zip" "$ROOT/out/player_raw.glb" "$BASE_SKIN" "$H1" "$BEARD" "$C3" "${COMMON[@]}"
+
+      - name: Build both palm directions
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/fix_animations.py" -- "$ROOT/out/player_raw.glb" "$ROOT/out/palm_plus.glb" 70
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/fix_animations.py" -- "$ROOT/out/player_raw.glb" "$ROOT/out/palm_minus.glb" -70
+
+      - name: Render wrist previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          mkdir -p "$ROOT/out/preview"
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/render_wrist_variant.py" -- "$ROOT/out/palm_plus.glb" "$ROOT/out/preview" plus
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/render_wrist_variant.py" -- "$ROOT/out/palm_minus.glb" "$ROOT/out/preview" minus
+
+      - name: Upload previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: wrist-direction-variants
+          path: out/preview/*.png
+          if-no-files-found: error
+          compression-level: 0
