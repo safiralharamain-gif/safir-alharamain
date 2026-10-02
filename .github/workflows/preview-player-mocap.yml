@@ -7,6 +7,7 @@ on:
     paths:
       - "game-v13/fix_animations.py"
       - "game-v13/render_player_walk_preview.py"
+      - "game-v13/retarget_100style_walk.py"
       - ".github/workflows/preview-player-mocap.yml"
   workflow_dispatch:
 
@@ -53,24 +54,6 @@ jobs:
           unzip -q beards.zip -d beard_assets
           curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
           curl -fL "https://raw.githubusercontent.com/navichat/motion/100caacd965e4ff83c85b9a66528f9991a3395e8/dev/web_viewer/assets/animations/neutral_walking.bvh" -o walk1.bvh
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('make-human.py')
-          s=p.read_text(encoding='utf-8')
-          # 100STYLE Neutral_FW skeleton -> MakeHuman game_engine targets.
-          reps=[('LowerBack','Chest'),('Spine','Chest2'),('Spine1','Chest4'),
-                ('LeftShoulder','LeftCollar'),('LeftArm','LeftShoulder'),('LeftForeArm','LeftElbow'),('LeftHand','LeftWrist'),
-                ('RightShoulder','RightCollar'),('RightArm','RightShoulder'),('RightForeArm','RightElbow'),('RightHand','RightWrist'),
-                ('LeftUpLeg','LeftHip'),('LeftLeg','LeftKnee'),('LeftFoot','LeftAnkle'),('LeftToeBase','LeftToe'),
-                ('RightUpLeg','RightHip'),('RightLeg','RightKnee'),('RightFoot','RightAnkle'),('RightToeBase','RightToe')]
-          for a,b in reps:
-              s=s.replace(chr(34)+a+chr(34),chr(34)+b+chr(34))
-          old='retarget(walk_bvh, "walk", 30, 150, 4)'
-          # One steady second at 60fps, sampled to ~30fps before our final cadence normalization.
-          new='retarget(walk_bvh, "walk", 300, 360, 2)'
-          assert old in s
-          p.write_text(s.replace(old,new),encoding='utf-8')
-          PY
           BASE_SKIN="$(find makehuman_assets -type f -name 'young_caucasian_male.mhmat' -print -quit)"
           H1="$(find makehuman_assets -type f -name 'short01.mhclo' -print -quit)"
           BEARD="$(find beard_assets -type f -iname 'wdg_scruffy_beard.mhclo' -print -quit)"
@@ -90,8 +73,9 @@ jobs:
           set -euo pipefail
           ROOT="$PWD"
           COMMON=("gender=1.0" "age=0.47" "muscle=0.58" "weight=0.50" "height=0.56" "proportions=0.57" "caucasian=0.64" "african=0.26" "asian=0.10" "tex=768")
-          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/tools/make-human.py" -- "$ROOT/tools/mpfb2.zip" "$ROOT/out/player_raw.glb" "$BASE_SKIN" "$H1" "$BEARD" "$C3" "$ROOT/tools/walk1.bvh" "${COMMON[@]}"
-          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/fix_animations.py" -- "$ROOT/out/player_raw.glb" "$ROOT/out/player_fixed.glb"
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/tools/make-human.py" -- "$ROOT/tools/mpfb2.zip" "$ROOT/out/player_raw.glb" "$BASE_SKIN" "$H1" "$BEARD" "$C3" "${COMMON[@]}"
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/retarget_100style_walk.py" -- "$ROOT/out/player_raw.glb" "$ROOT/tools/walk1.bvh" "$ROOT/out/player_mocap.glb" 300 360 2
+          "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/fix_animations.py" -- "$ROOT/out/player_mocap.glb" "$ROOT/out/player_fixed.glb"
 
       - name: Render player walk preview
         shell: bash
