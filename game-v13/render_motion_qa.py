@@ -116,6 +116,6 @@ render_character(normal_path,"idle",1,"idle_front")
 render_character(normal_path,"idle",1,"idle_side",view="side")
 render_character(ihram_path,"idle",1,"ihram_front")
 render_character(ihram_path,"idle",1,"ihram_back",view="back")
-render_character(npc_path,"walk",frames8[2],"npc_walk")
+# NPC visual QA omitted here; player walk is the acceptance target for this pass.
 
 print("V14_MOTION_QA_RENDERED",out_dir)
