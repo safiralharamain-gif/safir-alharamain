@@ -129,8 +129,9 @@ def neutralize_wrists(action,frames):
         pb[bn].rotation_mode='QUATERNION'
         # Rotate around the hand bone's own longitudinal Y axis so the palm can face the thigh.
         # Positive test polarity twists left/right in opposite directions.
-        side = 1.0 if bn == handL else -1.0
-        q = Quaternion(Vector((0.0,1.0,0.0)), math.radians(wrist_twist_deg * side))
+        # The left/right hand bones are mirrored already; use the SAME local-Y twist on both.
+        # Opposite signs made one palm turn inward while the other turned outward.
+        q = Quaternion(Vector((0.0,1.0,0.0)), math.radians(wrist_twist_deg))
         pb[bn].rotation_quaternion=q
         pb[bn].keyframe_insert("rotation_quaternion",frame=frame_start)
         pb[bn].rotation_quaternion=q
