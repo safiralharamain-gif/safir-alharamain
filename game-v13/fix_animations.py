@@ -3,6 +3,7 @@ from mathutils import Vector, Matrix, Quaternion
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 src, out = argv[:2]
+wrist_twist_deg = float(argv[2]) if len(argv) > 2 else 0.0
 
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
@@ -126,7 +127,10 @@ def neutralize_wrists(action,frames):
             if fc.data_path in paths:
                 action.fcurves.remove(fc)
         pb[bn].rotation_mode='QUATERNION'
-        q=Quaternion((1.0,0.0,0.0,0.0))
+        # Rotate around the hand bone's own longitudinal Y axis so the palm can face the thigh.
+        # Positive test polarity twists left/right in opposite directions.
+        side = 1.0 if bn == handL else -1.0
+        q = Quaternion(Vector((0.0,1.0,0.0)), math.radians(wrist_twist_deg * side))
         pb[bn].rotation_quaternion=q
         pb[bn].keyframe_insert("rotation_quaternion",frame=frame_start)
         pb[bn].rotation_quaternion=q
