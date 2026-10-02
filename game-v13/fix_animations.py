@@ -110,6 +110,29 @@ def set_target_pitch(obj,rest_q,angle,frame):
     obj.rotation_quaternion=Quaternion(Vector((1.0,0.0,0.0)),angle) @ rest_q
     obj.keyframe_insert("rotation_quaternion",frame=frame)
 
+def neutralize_wrists(action,frames):
+    # The hand bones were being visually baked from the IK result, which can leave
+    # an extra twist at the wrist. Remove that extra pose rotation and keep the
+    # wrist in the rig's anatomical rest alignment relative to the forearm.
+    arm.animation_data.action=action
+    frame_start=int(min(frames)); frame_end=int(max(frames))
+    for bn in (handL,handR):
+        paths={
+            f'pose.bones["{bn}"].rotation_quaternion',
+            f'pose.bones["{bn}"].rotation_euler',
+            f'pose.bones["{bn}"].rotation_axis_angle',
+        }
+        for fc in list(action.fcurves):
+            if fc.data_path in paths:
+                action.fcurves.remove(fc)
+        pb[bn].rotation_mode='QUATERNION'
+        q=Quaternion((1.0,0.0,0.0,0.0))
+        pb[bn].rotation_quaternion=q
+        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_start)
+        pb[bn].rotation_quaternion=q
+        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_end)
+    arm.animation_data.action=None
+
 def finger_relax(action,frames):
     # Replace baked starfish finger channels with a constant relaxed curl.
     # Using quaternion channels avoids Euler/quaternion conflicts after NLA bake.
@@ -222,6 +245,7 @@ for fr,breathe in ((1,0.0),(30,H*0.003),(60,0.0)):
         set_bone_axis_angle(head,(1,0,0),math.radians(-0.8),fr)
 
 idle=bake_action("idle",1,60)
+neutralize_wrists(idle,(1,60))
 finger_relax(idle,(1,30,60))
 for o in (hL,hR,fL,fR,eL,eR,kL,kR):
     if o.name in bpy.data.objects:
@@ -310,6 +334,7 @@ for fr,ly,ry,llift,rlift,bob in phases:
         pb[head].keyframe_insert("rotation_quaternion",frame=fr)
 
 walk=bake_action("walk",1,33)
+neutralize_wrists(walk,(1,33))
 finger_relax(walk,(1,5,9,13,17,21,25,29,33))
 for o in (hL,hR,fL,fR,eL,eR,kL,kR):
     if o.name in bpy.data.objects:
