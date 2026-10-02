@@ -138,7 +138,7 @@ jobs:
           set -euo pipefail
           ROOT="$PWD"
           for name in player_normal player_ihram npc_older npc_dark npc_young npc_stocky; do
-            "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/fix_animations.py" -- "$ROOT/build_project/${name}_raw.glb" "$ROOT/build_project/${name}_fixed.glb"
+            "$BLENDER" --background --python-exit-code 1 --python "$ROOT/game-v13/fix_animations.py" -- "$ROOT/build_project/${name}_raw.glb" "$ROOT/build_project/${name}_fixed.glb" "$ROOT/build_tools/walk1.bvh"
           done
 
       - name: Dress dedicated ihram character and pilgrim NPCs
