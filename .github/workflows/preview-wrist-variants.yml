@@ -32,7 +32,7 @@ jobs:
           mkdir -p tools out
           cd tools
           BASE="https://download.blender.org/release/Blender4.5/"
-          INDEX="$(curl -fsSL "$BASE"))"
+          INDEX="$(curl -fsSL "$BASE")"
           FILE="$(printf '%s' "$INDEX" | grep -oE 'blender-4\\.5\\.[0-9]+-linux-x64\\.tar\\.xz' | sort -V | tail -n1)"
           curl -fL "${BASE}${FILE}" -o blender.tar.xz
           tar -xf blender.tar.xz
