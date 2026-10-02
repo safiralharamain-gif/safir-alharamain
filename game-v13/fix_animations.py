@@ -3,7 +3,6 @@ from mathutils import Vector, Matrix, Quaternion
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 src, out = argv[:2]
-wrist_twist_deg = float(argv[2]) if len(argv) > 2 else 0.0
 
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
@@ -111,31 +110,82 @@ def set_target_pitch(obj,rest_q,angle,frame):
     obj.rotation_quaternion=Quaternion(Vector((1.0,0.0,0.0)),angle) @ rest_q
     obj.keyframe_insert("rotation_quaternion",frame=frame)
 
-def neutralize_wrists(action,frames):
-    # The hand bones were being visually baked from the IK result, which can leave
-    # an extra twist at the wrist. Remove that extra pose rotation and keep the
-    # wrist in the rig's anatomical rest alignment relative to the forearm.
+def orient_wrists_inward(action,frames):
+    """Keep each wrist straight, palm toward thigh, thumb generally forward.
+
+    This is derived from the actual rig geometry instead of guessing a fixed wrist Euler/twist.
+    The hand bone Y axis follows the forearm. The thumb-side axis is aimed toward forward (-Y),
+    which makes the palm plane face inward toward the thigh on both mirrored hands.
+    """
     arm.animation_data.action=action
     frame_start=int(min(frames)); frame_end=int(max(frames))
-    for bn in (handL,handR):
+
+    configs=[]
+    for hand_bn, fore_bn, side in ((handL,laL,"l"),(handR,laR,"r")):
+        thumb_bn=f"thumb_01_{side}"
+        if thumb_bn not in bones:
+            raise RuntimeError("Missing thumb bone for wrist orientation: "+thumb_bn)
+
+        # Hand-local reference basis from the real rest skeleton.
+        rest_rot=bones[hand_bn].matrix_local.to_3x3()
+        local_y=Vector((0.0,1.0,0.0))
+        thumb_arm=bones[thumb_bn].head_local-bones[hand_bn].head_local
+        thumb_local=rest_rot.inverted() @ thumb_arm
+        local_x=thumb_local-local_y*thumb_local.dot(local_y)
+        if local_x.length < 1e-6:
+            raise RuntimeError("Degenerate thumb axis on "+hand_bn)
+        local_x.normalize()
+        local_z=local_x.cross(local_y)
+        local_z.normalize()
+        local_x=local_y.cross(local_z)
+        local_x.normalize()
+        local_basis=Matrix((local_x,local_y,local_z)).transposed()
+        configs.append((hand_bn,fore_bn,local_basis))
+
+        # Remove all previous wrist rotation keys so they cannot fight this solution.
         paths={
-            f'pose.bones["{bn}"].rotation_quaternion',
-            f'pose.bones["{bn}"].rotation_euler',
-            f'pose.bones["{bn}"].rotation_axis_angle',
+            f'pose.bones["{hand_bn}"].rotation_quaternion',
+            f'pose.bones["{hand_bn}"].rotation_euler',
+            f'pose.bones["{hand_bn}"].rotation_axis_angle',
         }
         for fc in list(action.fcurves):
             if fc.data_path in paths:
                 action.fcurves.remove(fc)
-        pb[bn].rotation_mode='QUATERNION'
-        # Rotate around the hand bone's own longitudinal Y axis so the palm can face the thigh.
-        # Positive test polarity twists left/right in opposite directions.
-        # The left/right hand bones are mirrored already; use the SAME local-Y twist on both.
-        # Opposite signs made one palm turn inward while the other turned outward.
-        q = Quaternion(Vector((0.0,1.0,0.0)), math.radians(wrist_twist_deg))
-        pb[bn].rotation_quaternion=q
-        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_start)
-        pb[bn].rotation_quaternion=q
-        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_end)
+
+    for fr in range(frame_start,frame_end+1):
+        bpy.context.scene.frame_set(fr)
+        bpy.context.view_layer.update()
+
+        for hand_bn,fore_bn,local_basis in configs:
+            fore=pb[fore_bn]
+            hand=pb[hand_bn]
+
+            # Hand long axis is a straight continuation of the forearm.
+            target_y=(fore.tail-fore.head)
+            if target_y.length < 1e-6:
+                continue
+            target_y.normalize()
+
+            # Thumb points broadly forward; project forward off the forearm axis.
+            target_x=forward-target_y*forward.dot(target_y)
+            if target_x.length < 1e-6:
+                target_x=Vector((1.0,0.0,0.0))
+                target_x=target_x-target_y*target_x.dot(target_y)
+            target_x.normalize()
+
+            target_z=target_x.cross(target_y)
+            target_z.normalize()
+            target_x=target_y.cross(target_z)
+            target_x.normalize()
+            target_basis=Matrix((target_x,target_y,target_z)).transposed()
+
+            desired_rot=target_basis @ local_basis.inverted()
+            pos=hand.matrix.to_translation()
+            hand.matrix=Matrix.Translation(pos) @ desired_rot.to_4x4()
+            bpy.context.view_layer.update()
+            hand.rotation_mode='QUATERNION'
+            hand.keyframe_insert("rotation_quaternion",frame=fr)
+
     arm.animation_data.action=None
 
 def finger_relax(action,frames):
@@ -250,7 +300,7 @@ for fr,breathe in ((1,0.0),(30,H*0.003),(60,0.0)):
         set_bone_axis_angle(head,(1,0,0),math.radians(0.0),fr)
 
 idle=bake_action("idle",1,60)
-neutralize_wrists(idle,(1,60))
+orient_wrists_inward(idle,(1,60))
 finger_relax(idle,(1,30,60))
 for o in (hL,hR,fL,fR,eL,eR,kL,kR):
     if o.name in bpy.data.objects:
@@ -339,7 +389,7 @@ for fr,ly,ry,llift,rlift,bob in phases:
         pb[head].keyframe_insert("rotation_quaternion",frame=fr)
 
 walk=bake_action("walk",1,33)
-neutralize_wrists(walk,(1,33))
+orient_wrists_inward(walk,(1,33))
 finger_relax(walk,(1,5,9,13,17,21,25,29,33))
 for o in (hL,hR,fL,fR,eL,eR,kL,kR):
     if o.name in bpy.data.objects:
@@ -366,4 +416,4 @@ bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.abspath(out),export_format='GLB',
                           export_animations=True,export_animation_mode='ACTIONS',
                           export_yup=True,export_materials='EXPORT',export_apply=False)
-print("V17_REFERENCE_POSTURE_WALK",os.path.abspath(out))
+print("V18_ANATOMICAL_INWARD_PALMS",os.path.abspath(out))
