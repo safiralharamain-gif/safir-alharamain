@@ -35,13 +35,25 @@ required=[pelvis,uaL,uaR,laL,laR,handL,handR,thL,thR,caL,caR,footL,footR]
 if any(x is None for x in required):
     raise SystemExit("Missing required game-engine rig bones")
 
-# We intentionally rebuild ONLY idle + walk from anatomical IK targets.
-# This avoids guessing bone Euler axes, which caused the broken wrists and sideways/stiff legs.
+# IMPORTANT: keep the MakeHuman/CMU BVH-retargeted walk that arrived in the raw GLB.
+mocap_walk = next((a for a in bpy.data.actions if a.name.lower() == "walk"), None)
+if mocap_walk is None:
+    mocap_walk = next((a for a in bpy.data.actions if "walk" in a.name.lower()), None)
+if mocap_walk is None:
+    raise SystemExit("No imported mocap walk action found")
+
+mocap_walk.use_fake_user=True
+mocap_walk.name="walk"
+
+# Drop imported NLA tracks so we can rebuild a clean two-clip library.
 for tr in list(arm.animation_data.nla_tracks):
     arm.animation_data.nla_tracks.remove(tr)
-for a in list(bpy.data.actions):
-    bpy.data.actions.remove(a)
 arm.animation_data.action=None
+
+# Keep only the imported mocap walk; rebuild idle ourselves so the arms are down naturally.
+for a in list(bpy.data.actions):
+    if a != mocap_walk:
+        bpy.data.actions.remove(a)
 
 pts=[p for b in bones for p in (b.head_local,b.tail_local)]
 H=max(0.1,max(p.z for p in pts)-min(p.z for p in pts))
@@ -74,14 +86,6 @@ def add_ik(end_bone,target,pole):
     c.iterations=64
     return c
 
-def add_copy_world_rotation(bone_name,target):
-    c=pb[bone_name].constraints.new("COPY_ROTATION")
-    c.target=target
-    c.target_space='WORLD'
-    c.owner_space='WORLD'
-    c.mix_mode='REPLACE'
-    return c
-
 def clear_pose():
     for b in pb:
         b.location=(0,0,0)
@@ -101,32 +105,36 @@ def set_bone_axis_angle(bn,world_axis,angle,frame):
     pb[bn].rotation_quaternion=Quaternion(local_axis_for_world(bn,world_axis),angle)
     pb[bn].keyframe_insert("rotation_quaternion",frame=frame)
 
-def prepare_target_rotation(obj):
-    obj.rotation_mode='QUATERNION'
-    return obj.rotation_quaternion.copy()
+def strip_rotation_channels(action,bn):
+    paths={
+        f'pose.bones["{bn}"].rotation_quaternion',
+        f'pose.bones["{bn}"].rotation_euler',
+        f'pose.bones["{bn}"].rotation_axis_angle',
+    }
+    for fc in list(action.fcurves):
+        if fc.data_path in paths:
+            action.fcurves.remove(fc)
 
-def set_target_pitch(obj,rest_q,angle,frame):
-    obj.rotation_mode='QUATERNION'
-    obj.rotation_quaternion=Quaternion(Vector((1.0,0.0,0.0)),angle) @ rest_q
-    obj.keyframe_insert("rotation_quaternion",frame=frame)
+def strip_root_motion(action):
+    # The game owns world translation. Keep walk strictly in-place.
+    bad_paths={"location"}
+    for fc in list(action.fcurves):
+        dp=fc.data_path
+        if dp in bad_paths or dp == f'pose.bones["{pelvis}"].location':
+            action.fcurves.remove(fc)
 
-def orient_wrists_inward(action,frames):
-    """Keep each wrist straight, palm toward thigh, thumb generally forward.
-
-    This is derived from the actual rig geometry instead of guessing a fixed wrist Euler/twist.
-    The hand bone Y axis follows the forearm. The thumb-side axis is aimed toward forward (-Y),
-    which makes the palm plane face inward toward the thigh on both mirrored hands.
-    """
+def orient_wrists_inward(action):
+    """Preserve the approved palm direction while keeping the mocap arm swing."""
     arm.animation_data.action=action
-    frame_start=int(min(frames)); frame_end=int(max(frames))
+    f0=int(math.floor(action.frame_range[0]))
+    f1=int(math.ceil(action.frame_range[1]))
 
     configs=[]
-    for hand_bn, fore_bn, side in ((handL,laL,"l"),(handR,laR,"r")):
+    for hand_bn,fore_bn,side in ((handL,laL,"l"),(handR,laR,"r")):
         thumb_bn=f"thumb_01_{side}"
         if thumb_bn not in bones:
-            raise RuntimeError("Missing thumb bone for wrist orientation: "+thumb_bn)
+            raise RuntimeError("Missing thumb bone: "+thumb_bn)
 
-        # Hand-local reference basis from the real rest skeleton.
         rest_rot=bones[hand_bn].matrix_local.to_3x3()
         local_y=Vector((0.0,1.0,0.0))
         thumb_arm=bones[thumb_bn].head_local-bones[hand_bn].head_local
@@ -135,64 +143,46 @@ def orient_wrists_inward(action,frames):
         if local_x.length < 1e-6:
             raise RuntimeError("Degenerate thumb axis on "+hand_bn)
         local_x.normalize()
-        local_z=local_x.cross(local_y)
-        local_z.normalize()
-        local_x=local_y.cross(local_z)
-        local_x.normalize()
+        local_z=local_x.cross(local_y); local_z.normalize()
+        local_x=local_y.cross(local_z); local_x.normalize()
         local_basis=Matrix((local_x,local_y,local_z)).transposed()
         configs.append((hand_bn,fore_bn,local_basis))
+        strip_rotation_channels(action,hand_bn)
 
-        # Remove all previous wrist rotation keys so they cannot fight this solution.
-        paths={
-            f'pose.bones["{hand_bn}"].rotation_quaternion',
-            f'pose.bones["{hand_bn}"].rotation_euler',
-            f'pose.bones["{hand_bn}"].rotation_axis_angle',
-        }
-        for fc in list(action.fcurves):
-            if fc.data_path in paths:
-                action.fcurves.remove(fc)
-
-    for fr in range(frame_start,frame_end+1):
+    for fr in range(f0,f1+1):
         bpy.context.scene.frame_set(fr)
         bpy.context.view_layer.update()
-
         for hand_bn,fore_bn,local_basis in configs:
             fore=pb[fore_bn]
             hand=pb[hand_bn]
-
-            # Hand long axis is a straight continuation of the forearm.
             target_y=(fore.tail-fore.head)
             if target_y.length < 1e-6:
                 continue
             target_y.normalize()
 
-            # Thumb points broadly forward; project forward off the forearm axis.
             target_x=forward-target_y*forward.dot(target_y)
             if target_x.length < 1e-6:
                 target_x=Vector((1.0,0.0,0.0))
                 target_x=target_x-target_y*target_x.dot(target_y)
             target_x.normalize()
 
-            target_z=target_x.cross(target_y)
-            target_z.normalize()
-            target_x=target_y.cross(target_z)
-            target_x.normalize()
+            target_z=target_x.cross(target_y); target_z.normalize()
+            target_x=target_y.cross(target_z); target_x.normalize()
             target_basis=Matrix((target_x,target_y,target_z)).transposed()
-
             desired_rot=target_basis @ local_basis.inverted()
+
             pos=hand.matrix.to_translation()
             hand.matrix=Matrix.Translation(pos) @ desired_rot.to_4x4()
             bpy.context.view_layer.update()
             hand.rotation_mode='QUATERNION'
             hand.keyframe_insert("rotation_quaternion",frame=fr)
-
     arm.animation_data.action=None
 
-def finger_relax(action,frames):
-    # Replace baked starfish finger channels with a constant relaxed curl.
-    # Using quaternion channels avoids Euler/quaternion conflicts after NLA bake.
+def finger_relax(action):
+    """Use the already-approved light finger curl, constant through the clip."""
     arm.animation_data.action=action
-    frame_start=int(min(frames)); frame_end=int(max(frames))
+    f0=int(math.floor(action.frame_range[0]))
+    f1=int(math.ceil(action.frame_range[1]))
     curl={"01":-0.12,"02":-0.24,"03":-0.18}
     thumb={"01":-0.04,"02":-0.07,"03":-0.05}
     names=[]
@@ -206,40 +196,14 @@ def finger_relax(action,frames):
     for bn,ang in names:
         if bn not in pb:
             continue
-        # Remove every baked rotation channel for this finger bone.
-        paths={
-            f'pose.bones["{bn}"].rotation_quaternion',
-            f'pose.bones["{bn}"].rotation_euler',
-            f'pose.bones["{bn}"].rotation_axis_angle',
-        }
-        for fc in list(action.fcurves):
-            if fc.data_path in paths:
-                action.fcurves.remove(fc)
+        strip_rotation_channels(action,bn)
         pb[bn].rotation_mode='QUATERNION'
         q=Quaternion(Vector((0.0,0.0,1.0)),ang)
         pb[bn].rotation_quaternion=q
-        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_start)
+        pb[bn].keyframe_insert("rotation_quaternion",frame=f0)
         pb[bn].rotation_quaternion=q
-        pb[bn].keyframe_insert("rotation_quaternion",frame=frame_end)
+        pb[bn].keyframe_insert("rotation_quaternion",frame=f1)
     arm.animation_data.action=None
-
-def build_constraints(prefix):
-    # Wrist / ankle targets keep their REST world orientation while their positions move.
-    hL=make_target(prefix+"_HandL",handL)
-    hR=make_target(prefix+"_HandR",handR)
-    fL=make_target(prefix+"_FootL",footL)
-    fR=make_target(prefix+"_FootR",footR)
-    eL=make_target(prefix+"_ElbowPoleL")
-    eR=make_target(prefix+"_ElbowPoleR")
-    kL=make_target(prefix+"_KneePoleL")
-    kR=make_target(prefix+"_KneePoleR")
-
-    add_ik(laL,hL,eL); add_ik(laR,hR,eR)
-    # Let the hands inherit the solved forearm orientation. Keeping the T-pose wrist
-    # rotation in world space was what made the palms look broken/open.
-    add_ik(caL,fL,kL); add_ik(caR,fR,kR)
-    add_copy_world_rotation(footL,fL); add_copy_world_rotation(footR,fR)
-    return hL,hR,fL,fR,eL,eR,kL,kR
 
 def bake_action(name,start,end):
     bpy.context.view_layer.objects.active=arm
@@ -254,21 +218,20 @@ def bake_action(name,start,end):
     act.use_fake_user=True
     return act
 
-# ---------- Neutral idle ----------
+# ---------- Neutral idle (same approved arm/hand placement) ----------
 clear_pose()
 idle=bpy.data.actions.new("idle")
 arm.animation_data.action=idle
-hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Idle")
 
-wristL=local_head(handL); wristR=local_head(handR)
-ankleL=local_head(footL); ankleR=local_head(footR)
+hL=make_target("Idle_HandL",handL); hR=make_target("Idle_HandR",handR)
+eL=make_target("Idle_ElbowPoleL"); eR=make_target("Idle_ElbowPoleR")
+add_ik(laL,hL,eL); add_ik(laR,hR,eR)
+
 shoulderL=local_head(uaL); shoulderR=local_head(uaR)
 hipL=local_head(thL); hipR=local_head(thR)
-kneeL=local_head(caL); kneeR=local_head(caR)
 left_sign=1.0 if hipL.x > hipR.x else -1.0
 right_sign=-left_sign
 
-# Put the hands beside the thighs instead of reusing the T-pose wrist positions.
 hand_side=H*0.065
 hand_drop=H*0.170
 idle_hL=Vector((hipL.x + left_sign*hand_side, hipL.y-H*0.012, hipL.z-hand_drop))
@@ -278,129 +241,42 @@ pole_back=H*0.045
 idle_eL=Vector((shoulderL.x+left_sign*pole_out, shoulderL.y+pole_back, shoulderL.z-H*0.115))
 idle_eR=Vector((shoulderR.x+right_sign*pole_out, shoulderR.y+pole_back, shoulderR.z-H*0.115))
 
-# Keep each foot almost directly below its own hip, avoiding the wide-legged stance.
-foot_side=H*0.010
-base_footL=Vector((hipL.x+left_sign*foot_side, ankleL.y, ankleL.z))
-base_footR=Vector((hipR.x+right_sign*foot_side, ankleR.y, ankleR.z))
-knee_forward=H*0.115
-idle_kL=kneeL + Vector((0.0,-knee_forward,0.0))
-idle_kR=kneeR + Vector((0.0,-knee_forward,0.0))
-
 for fr,breathe in ((1,0.0),(30,H*0.003),(60,0.0)):
     set_target_local(hL,idle_hL+Vector((0,0,breathe)),fr)
     set_target_local(hR,idle_hR+Vector((0,0,breathe)),fr)
-    set_target_local(fL,base_footL,fr); set_target_local(fR,base_footR,fr)
     set_target_local(eL,idle_eL,fr); set_target_local(eR,idle_eR,fr)
-    set_target_local(kL,idle_kL,fr); set_target_local(kR,idle_kR,fr)
     pb[pelvis].location=(0.0,0.0,breathe*0.20)
     pb[pelvis].keyframe_insert("location",frame=fr)
     if spine:
         set_bone_axis_angle(spine,(1,0,0),math.radians(0.5),fr)
     if head:
-        set_bone_axis_angle(head,(1,0,0),math.radians(0.0),fr)
+        set_bone_axis_angle(head,(1,0,0),0.0,fr)
 
 idle=bake_action("idle",1,60)
-orient_wrists_inward(idle,(1,60))
-finger_relax(idle,(1,30,60))
-for o in (hL,hR,fL,fR,eL,eR,kL,kR):
+orient_wrists_inward(idle)
+finger_relax(idle)
+for o in (hL,hR,eL,eR):
     if o.name in bpy.data.objects:
         bpy.data.objects.remove(o,do_unlink=True)
 
-# ---------- Natural 8-phase in-place walk ----------
-clear_pose()
-walk=bpy.data.actions.new("walk")
-arm.animation_data.action=walk
-hL,hR,fL,fR,eL,eR,kL,kR=build_constraints("Walk")
+# ---------- Real mocap walk from MakeHuman retarget ----------
+walk=mocap_walk
+walk.name="walk"
+walk.use_fake_user=True
+strip_root_motion(walk)
 
-# frame, left_y, right_y, left_lift, right_lift, body_bob
-# Negative Y is forward for this MakeHuman asset.
-step=H*0.105
-lift=H*0.030
-phases=[
-    (1,  -step,      step*0.82, 0.000,      0.000,      0.000), # L contact
-    (5,  -step*0.78, step*0.55, 0.000,      0.000,     -H*0.006), # down
-    (9,  -step*0.22, 0.000,     0.000,      lift*0.72,  H*0.001), # R passing
-    (13,  step*0.38,-step*0.62,  0.000,      lift,       H*0.006), # R swing/up
-    (17,  step*0.82,-step,       0.000,      0.000,      0.000), # R contact
-    (21,  step*0.55,-step*0.78,  0.000,      0.000,     -H*0.006), # down
-    (25,  0.000,    -step*0.22,  lift*0.72,  0.000,      H*0.001), # L passing
-    (29, -step*0.62, step*0.38,  lift,       0.000,      H*0.006), # L swing/up
-    (33, -step,      step*0.82,  0.000,      0.000,      0.000), # loop
-]
+# The BVH already contains natural pelvis, spine, leg, knee, foot and arm timing.
+# Touch only wrists/fingers so the approved hand pose is never lost.
+orient_wrists_inward(walk)
+finger_relax(walk)
 
-# Calm heel-strike -> flat -> toe-off roll, matching a normal slow walk.
-# Negative pitch lifts the toe; positive pitch gives toe-off.
-foot_pitch = {
-    1:(math.radians(-6), math.radians(9)),
-    5:(0.0, math.radians(5)),
-    9:(0.0, math.radians(-3)),
-    13:(math.radians(8), math.radians(-4)),
-    17:(math.radians(9), math.radians(-6)),
-    21:(math.radians(5), 0.0),
-    25:(math.radians(-3), 0.0),
-    29:(math.radians(-4), math.radians(8)),
-    33:(math.radians(-6), math.radians(9)),
-}
-rest_foot_rot_L=prepare_target_rotation(fL)
-rest_foot_rot_R=prepare_target_rotation(fR)
-
-# Arms swing opposite the legs, but hands stay close to the torso.
-hand_swing=H*0.055
-for fr,ly,ry,llift,rlift,bob in phases:
-    lf=base_footL + Vector((0.0,ly,llift))
-    rf=base_footR + Vector((0.0,ry,rlift))
-    set_target_local(fL,lf,fr); set_target_local(fR,rf,fr)
-    lp,rp=foot_pitch[fr]
-    set_target_pitch(fL,rest_foot_rot_L,lp,fr)
-    set_target_pitch(fR,rest_foot_rot_R,rp,fr)
-
-    # Knee pole follows the leg slightly so the knee bends forward rather than sideways/back.
-    set_target_local(kL,Vector((kneeL.x,kneeL.y-knee_forward+ly*0.12,kneeL.z+llift*0.20)),fr)
-    set_target_local(kR,Vector((kneeR.x,kneeR.y-knee_forward+ry*0.12,kneeR.z+rlift*0.20)),fr)
-
-    # Contralateral arm swing.
-    larm_y = -ly/step * hand_swing
-    rarm_y = -ry/step * hand_swing
-    arm_lift=H*0.006*max(abs(larm_y),abs(rarm_y))/max(hand_swing,1e-6)
-    lh=idle_hL + Vector((0.0,larm_y,arm_lift))
-    rh=idle_hR + Vector((0.0,rarm_y,arm_lift))
-    set_target_local(hL,lh,fr); set_target_local(hR,rh,fr)
-    set_target_local(eL,Vector((idle_eL.x,idle_eL.y+larm_y*0.52,idle_eL.z+arm_lift*0.35)),fr)
-    set_target_local(eR,Vector((idle_eR.x,idle_eR.y+rarm_y*0.52,idle_eR.z+arm_lift*0.35)),fr)
-
-    # Shift weight slightly toward the planted leg, with subtle counter-rotation.
-    support = left_sign if llift <= rlift else right_sign
-    side_shift = support * H*0.003
-    pb[pelvis].location=(side_shift,0.0,bob)
-    pb[pelvis].keyframe_insert("location",frame=fr)
-    yaw = math.radians(0.9) * (-ly/step)
-    set_bone_axis_angle(pelvis,(0,0,1),yaw,fr)
-    if spine:
-        ax=local_axis_for_world(spine,(1,0,0))
-        az=local_axis_for_world(spine,(0,0,1))
-        pb[spine].rotation_mode='QUATERNION'
-        pb[spine].rotation_quaternion=Quaternion(az,-yaw*0.70) @ Quaternion(ax,math.radians(0.6))
-        pb[spine].keyframe_insert("rotation_quaternion",frame=fr)
-    if head:
-        axh=local_axis_for_world(head,(1,0,0))
-        azh=local_axis_for_world(head,(0,0,1))
-        pb[head].rotation_mode='QUATERNION'
-        pb[head].rotation_quaternion=Quaternion(azh,yaw*0.15) @ Quaternion(axh,math.radians(0.0))
-        pb[head].keyframe_insert("rotation_quaternion",frame=fr)
-
-walk=bake_action("walk",1,33)
-orient_wrists_inward(walk,(1,33))
-finger_relax(walk,(1,5,9,13,17,21,25,29,33))
-for o in (hL,hR,fL,fR,eL,eR,kL,kR):
-    if o.name in bpy.data.objects:
-        bpy.data.objects.remove(o,do_unlink=True)
-
-# Keep only the two clips used by the game.
+# Clean NLA library: only idle + real mocap walk.
+for tr in list(arm.animation_data.nla_tracks):
+    arm.animation_data.nla_tracks.remove(tr)
 for a in list(bpy.data.actions):
     if a not in (idle,walk):
         bpy.data.actions.remove(a)
-for tr in list(arm.animation_data.nla_tracks):
-    arm.animation_data.nla_tracks.remove(tr)
+
 for act in (idle,walk):
     tr=arm.animation_data.nla_tracks.new()
     tr.name=act.name
@@ -411,9 +287,10 @@ arm.animation_data.action=None
 
 bpy.context.scene.render.fps=30
 bpy.context.scene.frame_start=1
-bpy.context.scene.frame_end=60
+bpy.context.scene.frame_end=max(60,int(walk.frame_range[1]))
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.export_scene.gltf(filepath=os.path.abspath(out),export_format='GLB',
                           export_animations=True,export_animation_mode='ACTIONS',
                           export_yup=True,export_materials='EXPORT',export_apply=False)
-print("V18_ANATOMICAL_INWARD_PALMS",os.path.abspath(out))
+print("V19_MOCAP_WALK_APPROVED_HANDS",os.path.abspath(out),
+      "walk_frames",tuple(round(x,2) for x in walk.frame_range))
