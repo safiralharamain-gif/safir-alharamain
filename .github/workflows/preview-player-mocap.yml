@@ -52,16 +52,22 @@ jobs:
           unzip -q makehuman_assets.zip -d makehuman_assets
           unzip -q beards.zip -d beard_assets
           curl -fL "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/scripts/blender/make-human.py" -o make-human.py
-          curl -fL "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/animations/walks/walk1.bvh" -o walk1.bvh
+          curl -fL "https://raw.githubusercontent.com/navichat/motion/100caacd965e4ff83c85b9a66528f9991a3395e8/dev/web_viewer/assets/animations/neutral_walking.bvh" -o walk1.bvh
           python3 - <<'PY'
           from pathlib import Path
           p=Path('make-human.py')
           s=p.read_text(encoding='utf-8')
-          reps=[('Spine1','Spine3'),('Spine','Spine2'),('LowerBack','Spine1'),('LeftShoulder','Clavicle_L'),('LeftArm','UpArm_L'),('LeftForeArm','LoArm_L'),('LeftHand','Hand_L'),('RightShoulder','Clavicle_R'),('RightArm','UpArm_R'),('RightForeArm','LoArm_R'),('RightHand','Hand_R'),('LeftUpLeg','UpLeg_L'),('LeftLeg','LoLeg_L'),('LeftFoot','Foot_L'),('LeftToeBase','Toe_L'),('RightUpLeg','UpLeg_R'),('RightLeg','LoLeg_R'),('RightFoot','Foot_R'),('RightToeBase','Toe_R')]
+          # 100STYLE Neutral_FW skeleton -> MakeHuman game_engine targets.
+          reps=[('LowerBack','Chest'),('Spine','Chest2'),('Spine1','Chest4'),
+                ('LeftShoulder','LeftCollar'),('LeftArm','LeftShoulder'),('LeftForeArm','LeftElbow'),('LeftHand','LeftWrist'),
+                ('RightShoulder','RightCollar'),('RightArm','RightShoulder'),('RightForeArm','RightElbow'),('RightHand','RightWrist'),
+                ('LeftUpLeg','LeftHip'),('LeftLeg','LeftKnee'),('LeftFoot','LeftAnkle'),('LeftToeBase','LeftToe'),
+                ('RightUpLeg','RightHip'),('RightLeg','RightKnee'),('RightFoot','RightAnkle'),('RightToeBase','RightToe')]
           for a,b in reps:
               s=s.replace(chr(34)+a+chr(34),chr(34)+b+chr(34))
           old='retarget(walk_bvh, "walk", 30, 150, 4)'
-          new='retarget(walk_bvh, "walk", 1, 14, 1)'
+          # One steady second at 60fps, sampled to ~30fps before our final cadence normalization.
+          new='retarget(walk_bvh, "walk", 300, 360, 2)'
           assert old in s
           p.write_text(s.replace(old,new),encoding='utf-8')
           PY
