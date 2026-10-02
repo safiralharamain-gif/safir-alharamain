@@ -118,8 +118,11 @@ for fc in walk.fcurves:
 
 # Clean source BVH object/action before export.
 bpy.data.objects.remove(src,do_unlink=True)
-if src_action in bpy.data.actions:
-    bpy.data.actions.remove(src_action)
+if src_action is not None:
+    try:
+        bpy.data.actions.remove(src_action)
+    except Exception:
+        pass
 
 # Export only target + its mocap walk.
 for tr in list(arm.animation_data.nla_tracks):
