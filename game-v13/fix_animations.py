@@ -123,6 +123,18 @@ def strip_root_motion(action):
         if dp in bad_paths or dp == f'pose.bones["{pelvis}"].location':
             action.fcurves.remove(fc)
 
+def rescale_action_time(action,target_end=29.0):
+    """Stretch the compact 14-frame mocap cycle to a calm ~1 second 30-fps walk."""
+    a0=float(action.frame_range[0]); a1=float(action.frame_range[1])
+    if a1-a0 < 1e-6:
+        return
+    scale=(target_end-1.0)/(a1-a0)
+    for fc in action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.co.x = 1.0 + (kp.co.x-a0)*scale
+            kp.handle_left.x = 1.0 + (kp.handle_left.x-a0)*scale
+            kp.handle_right.x = 1.0 + (kp.handle_right.x-a0)*scale
+
 def orient_wrists_inward(action):
     """Preserve the approved palm direction while keeping the mocap arm swing."""
     arm.animation_data.action=action
@@ -264,6 +276,7 @@ walk=mocap_walk
 walk.name="walk"
 walk.use_fake_user=True
 strip_root_motion(walk)
+rescale_action_time(walk,29.0)
 
 # The BVH already contains natural pelvis, spine, leg, knee, foot and arm timing.
 # Touch only wrists/fingers so the approved hand pose is never lost.
