@@ -65,7 +65,7 @@ print("RETARGET_PAIRS",len(pairs),sorted(pairs.items()))
 if missing:
     print("RETARGET_MISSING",missing)
 
-# Precompute REST orientation of each bone in common world coordinates.
+# Precompute source/target REST orientations in actual world coordinates.
 src_obj_rot=src.matrix_world.to_3x3()
 tgt_obj_rot=arm.matrix_world.to_3x3()
 src_rest_world={}
@@ -73,6 +73,16 @@ tgt_rest_world={}
 for tb,sb in pairs.items():
     src_rest_world[tb]=src_obj_rot @ src.data.bones[sb].matrix_local.to_3x3()
     tgt_rest_world[tb]=tgt_obj_rot @ arm.data.bones[tb].matrix_local.to_3x3()
+
+def depth(b):
+    d=0
+    while b.parent is not None:
+        d+=1
+        b=b.parent
+    return d
+
+# Parents first because PoseBone.matrix is an armature-space/world-hierarchy matrix.
+order=sorted(pairs.keys(),key=lambda n: depth(arm.data.bones[n]))
 
 walk=bpy.data.actions.new("walk")
 walk.use_fake_user=True
@@ -91,20 +101,21 @@ for fr in range(fstart,fend+1,fstep):
     bpy.context.view_layer.update()
     se=src.evaluated_get(deps)
 
-    for tb,sb in pairs.items():
-        sp=se.pose.bones[sb]
-        # matrix_basis is the animated delta from source rest pose in source-bone local axes.
-        q_src=sp.matrix_basis.to_quaternion()
-        S=src_rest_world[tb]
-        T=tgt_rest_world[tb]
+    for tb in order:
+        sb=pairs[tb]
+        # Copy the source bone's *world orientation delta from its own rest pose*.
+        # This is independent of different local bone axes/rest poses in the two rigs.
+        s_pose_world=src_obj_rot @ se.pose.bones[sb].matrix.to_3x3()
+        d_world=s_pose_world @ src_rest_world[tb].inverted()
+        t_pose_world=d_world @ tgt_rest_world[tb]
 
-        # Express the source's anatomical rotation delta in world axes, then re-express
-        # the same delta in the target bone's own rest-local axes.
-        d_world=S @ q_src.to_matrix() @ S.inverted()
-        d_tgt=T.inverted() @ d_world @ T
+        # PoseBone.matrix expects armature-object space.
+        t_pose_arm=tgt_obj_rot.inverted() @ t_pose_world
         p=arm.pose.bones[tb]
+        pos=p.matrix.to_translation()
+        p.matrix=Matrix.Translation(pos) @ t_pose_arm.to_4x4()
+        bpy.context.view_layer.update()
         p.rotation_mode='QUATERNION'
-        p.rotation_quaternion=d_tgt.to_quaternion()
         p.keyframe_insert("rotation_quaternion",frame=out_fr)
 
     out_fr += 1
