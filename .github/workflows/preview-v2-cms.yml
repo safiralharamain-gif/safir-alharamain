@@ -1,0 +1,52 @@
+name: Apply Preview V2 CMS request
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'preview-v2/cms-requests/*.json'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Apply latest Preview V2 CMS request
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="$(git diff --name-only HEAD^ HEAD -- 'preview-v2/cms-requests/*.json' | tail -n 1)"
+          if [ -z "$FILE" ]; then
+            echo "No Preview V2 CMS request file found."
+            exit 0
+          fi
+          node - "$FILE" <<'NODE'
+          const fs = require('fs');
+          const file = process.argv[2];
+          const input = JSON.parse(fs.readFileSync(file,'utf8'));
+          const allowed = ['brand','home','umrahPrograms','umrahGuide','pastTrips','videos','offers','gifts','hajjPrograms','faq'];
+          const clean = {};
+          for (const k of allowed) if (Object.prototype.hasOwnProperty.call(input,k)) clean[k] = input[k];
+          fs.mkdirSync('preview-v2/data',{recursive:true});
+          fs.writeFileSync('preview-v2/data/site-content.json', JSON.stringify(clean,null,2)+'\n');
+          NODE
+
+      - name: Commit applied Preview V2 content
+        shell: bash
+        run: |
+          if git diff --quiet -- preview-v2/data/site-content.json; then
+            echo "No content change."
+            exit 0
+          fi
+          git config user.name "Safir Preview CMS"
+          git config user.email "actions@users.noreply.github.com"
+          git add preview-v2/data/site-content.json
+          git commit -m "Apply Preview V2 CMS content update"
+          git push
