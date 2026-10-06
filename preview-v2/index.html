@@ -13,11 +13,12 @@
     let html = await res.text();
 
     // Force all original relative CSS/JS/images/fonts/pages to resolve from repo root.
-    html = html.replace(/<head([^>]*)>/i, '<head$1><base href="../">');
+    html = html.replace(/<head([^>]*)>/i, '<head$1><base href="../"><link rel="stylesheet" href="preview-v2/live-content.css">');
 
     // Keep preview navigation inside the V2 shell when returning to home.
     html = html.replace(/href="index\.html"/g, 'href="preview-v2/index.html"');
 
+    html = html.replace(/<\/body>/i, '<script src="preview-v2/live-content.js"><\\/script></body>');
     document.open();
     document.write(html);
     document.close();
