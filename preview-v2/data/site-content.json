@@ -5,10 +5,24 @@
     "intro": "اختر برنامج عمرتك، وتعرّف على المناسك، وشاهد جانبًا من رحلاتنا السابقة."
   },
   "home": {
-    "announcement": "",
+    "announcement": "اطلع عمره بالتقسيط الان",
     "heroNote": ""
   },
-  "umrahPrograms": [],
+  "umrahPrograms": [
+    {
+      "title": "برنامج عمرة جديد",
+      "date": "",
+      "duration": "15 يوم",
+      "makkahHotel": "برج",
+      "madinahHotel": "طيبه",
+      "price": "",
+      "status": "متاح",
+      "image": "",
+      "summary": "",
+      "featured": false,
+      "visible": true
+    }
+  ],
   "umrahGuide": {
     "title": "شرح العمرة",
     "subtitle": "دليل مبسط يساعد المعتمر على معرفة ترتيب المناسك قبل السفر.",
@@ -18,7 +32,18 @@
   },
   "pastTrips": [],
   "videos": [],
-  "offers": [],
+  "offers": [
+    {
+      "title": "عرض جديد",
+      "badge": "عرض",
+      "details": "",
+      "price": "",
+      "startDate": "",
+      "endDate": "",
+      "image": "",
+      "visible": true
+    }
+  ],
   "gifts": [],
   "hajjPrograms": [],
   "faq": []
