@@ -1,0 +1,23 @@
+name: Configure production domain
+
+on:
+  push:
+    paths:
+      - '.github/workflows/configure-production-domain.yml'
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set GitHub Pages custom domain
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          echo "Configuring safiralharamain.com for $GITHUB_REPOSITORY"
+          gh api             --method PUT             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             "/repos/$GITHUB_REPOSITORY/pages"             -f cname='safiralharamain.com'
+          echo "Custom domain configured."
