@@ -1,0 +1,19 @@
+<!doctype html><html lang="ar" dir="rtl"><head><base target="_top"><meta charset="UTF-8"><style>
+body{font-family:Tahoma,Arial;padding:14px;color:#23483d}h2{margin:0 0 15px}button{border:0;border-radius:7px;background:#125744;color:white;padding:10px;margin:4px 0;cursor:pointer}input,select,textarea{display:block;width:100%;box-sizing:border-box;margin:6px 0 12px;padding:9px;border:1px solid #aaa;border-radius:6px}label{font-weight:bold;font-size:12px}.item{border:1px solid #ddd;padding:10px;border-radius:8px;margin:8px 0}.muted{color:#697a71;font-size:12px}.error{color:#a52714}</style></head><body>
+<h2>لوحة سفير الحرمين</h2><p class="muted">إدارة العروض والحجوزات — من داخل Google Sheets</p>
+<div id="summary">جارٍ التحميل...</div><button onclick="load()">تحديث البيانات</button><h3>إضافة / تعديل عرض</h3>
+<form id="offerForm"><input type="hidden" id="id"><label>عنوان العرض<input id="title" required maxlength="120"></label><label>السعر بالجنيه<input id="price" type="number" min="0" required></label><label>تاريخ السفر<input type="date" id="departure_date"></label><label>مدة الرحلة بالأيام<input id="duration_days" type="number" min="0"></label><label>الفندق<input id="hotel"></label><label>التفاصيل<textarea id="description" rows="3"></textarea></label><label>الحالة<select id="status"><option value="draft">مسودة</option><option value="published">منشور</option><option value="hidden">مخفي</option><option value="expired">منتهي</option></select></label><button>حفظ العرض</button><button type="button" onclick="document.getElementById('offerForm').reset();document.getElementById('id').value=''">عرض جديد</button></form>
+<p id="message" role="status"></p><h3>العروض</h3><div id="offers"></div><h3>طلبات الحجز</h3><div id="bookings"></div>
+<script>
+let current={offers:[],bookings:[]};
+function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function error(e){document.getElementById('message').textContent=e.message||String(e);document.getElementById('message').className='error';}
+function load(){google.script.run.withSuccessHandler(d=>{current=d;document.getElementById('summary').textContent='العروض: '+d.totals.offers+' | المنشورة: '+d.totals.active+' | الحجوزات: '+d.totals.bookings+' | الجديدة: '+d.totals.newBookings;
+document.getElementById('offers').innerHTML=d.offers.map((x,i)=>'<div class="item"><b>'+safe(x.title)+'</b><br>'+safe(x.price)+' ج.م — '+safe(x.status)+'<br><button onclick="edit('+i+')">تعديل</button></div>').join('')||'لا توجد عروض';
+document.getElementById('bookings').innerHTML=d.bookings.slice().reverse().map(x=>'<div class="item"><b>'+safe(x.name)+'</b><br>'+safe(x.phone)+' — '+safe(x.service)+'<br>'+safe(x.created_at)+'<br>الحالة: '+safe(x.status)+'<br><button onclick="changeStatus(\''+safe(x.id)+'\',\'contacted\')">تم التواصل</button><button onclick="changeStatus(\''+safe(x.id)+'\',\'confirmed\')">تأكيد</button></div>').join('')||'لا توجد حجوزات';
+}).withFailureHandler(error).getDashboardData();}
+function edit(i){const x=current.offers[i];for(const k of ['id','title','price','departure_date','duration_days','hotel','description','status'])document.getElementById(k).value=x[k]??'';window.scrollTo(0,0)}
+function changeStatus(id,status){google.script.run.withSuccessHandler(load).withFailureHandler(error).setBookingStatus(id,status)}
+document.getElementById('offerForm').addEventListener('submit',e=>{e.preventDefault();const x={};for(const k of ['id','title','price','departure_date','duration_days','hotel','description','status']) x[k]=document.getElementById(k).value;google.script.run.withSuccessHandler(()=>{document.getElementById('message').textContent='تم حفظ العرض';load()}).withFailureHandler(error).saveOffer(x)});
+load();
+</script></body></html>
