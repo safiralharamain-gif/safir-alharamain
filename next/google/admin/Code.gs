@@ -40,7 +40,7 @@ function rows_(name){
 }
 function getDashboardData(){
   const offers=rows_('عروض العمرة'),bookings=rows_('طلبات الحجز');
-  return {offers,bookings,totals:{offers:offers.length,active:offers.filter(x=>x.status==='منشور').length,bookings:bookings.length,new'طلبات الحجز':bookings.filter(x=>x.status==='جديد').length}};
+  return {offers,bookings,totals:{offers:offers.length,active:offers.filter(x=>x.status==='منشور').length,bookings:bookings.length,newBookings:bookings.filter(x=>x.status==='جديد').length}};
 }
 function saveOffer(data){
   if(!data || typeof data!=='object') throw new Error('بيانات غير صحيحة');
