@@ -20,11 +20,11 @@ function submitBooking(data){
   const lock=LockService.getScriptLock();lock.waitLock(20000);
   try{
     const ss=SpreadsheetApp.openById(sheetId);
-    const sh=ss.getSheetByName('Bookings');
+    const sh=ss.getSheetByName('طلبات الحجز');
     if(!sh)throw new Error('قاعدة بيانات الحجوزات غير مهيأة');
     const id=Utilities.getUuid();
     const clean=x=>x.startsWith('=')||x.startsWith('+')||x.startsWith('-')||x.startsWith('@')?"'"+x:x;
-    sh.appendRow([id,new Date().toISOString(),clean(name),"'"+phone,service,travelDate,clean(notes),'new']);
+    sh.appendRow([id,new Date().toISOString(),clean(name),"'"+phone,service,travelDate,clean(notes),'جديد']);
     return {ok:true,id};
   } finally{lock.releaseLock()}
 }
