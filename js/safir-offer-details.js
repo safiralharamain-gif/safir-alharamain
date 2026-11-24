@@ -10,6 +10,17 @@
   const URL_BACKUP = 'data/umrah-programs-published.json';
   const URL_LIVE = 'https://script.google.com/macros/s/AKfycbz85MU5YkKwBIcC2d5pH0OaJqptfEOKIo9TSaYAzlUJ9eBg1g23AvCB7-liR-OEUArk/exec';
   const URL_BOOKING = 'https://script.google.com/macros/s/AKfycbzDnlNzZLnZ9d32pqQ9mXW8DF-BpoY-YD8aCv1yV-SuDcWN3Z2SqwKwwJPSbDIkXwAm/exec';
+  const sections={
+    umrah:{name:'عمرة',page:'umrah-booking.html'},
+    hajj:{name:'حج',page:'hajj-trips.html'},
+    internal:{name:'رحلة داخلية',page:'travel-trips.html'},
+    hotel:{name:'فنادق',page:'hotel-booking.html'},
+    flight:{name:'طيران',page:'flight-booking.html'},
+    visa:{name:'تأشيرات',page:'visa.html'},
+    transport:{name:'نقل وليموزين',page:'transport.html'},
+    barcode:{name:'باركود',page:'barcode.html'},
+    general:{name:'عرض سفير الحرمين',page:'index.html'}
+  };
   let currentOffer = null, liveFound = false;
 
   function node(name, className, value) {
@@ -40,10 +51,12 @@
   function render(o) {
     if (!o || o.status !== 'منشور') return;
     currentOffer = o;
-    document.title = (o.title || 'تفاصيل العمرة') + ' | سفير الحرمين';
+    const category=sections[o.category]||sections.umrah;
+    const tripSection=(o.category==='umrah'||o.category==='hajj');
+    document.title = (o.title || 'تفاصيل العرض') + ' | سفير الحرمين';
     container.replaceChildren();
     const root = node('div', 'container mx-auto px-3');root.style.maxWidth = '1000px';
-    const h = node('h1', 'fs-2 text-center lh-lg mb-0', o.title || 'برنامج عمرة');
+    const h = node('h1', 'fs-2 text-center lh-lg mb-0', o.title || 'تفاصيل العرض');
     h.style.marginTop = '10rem';root.append(h);
     const imageBox = node('div', 'details-imgs w-100 mx-auto rounded-5 overflow-hidden shadow');
     const poster = node('img', 'w-100');poster.alt = o.title || 'صورة البرنامج';
@@ -56,13 +69,13 @@
     const x = o.extras || {};
     const cost = Number(o.price);
     const table = makeTable([
-      ['تاريخ الرحلة', o.departure_date],
-      ['مدة الرحلة', o.duration_days ? o.duration_days + ' يوم' : ''],
+      [tripSection?'تاريخ الرحلة':'تاريخ العرض أو الخدمة', o.departure_date],
+      [tripSection?'مدة الرحلة':'المدة', o.duration_days ? o.duration_days + ' يوم' : ''],
       ['تاريخ العودة', x.returnDate],
-      ['فندق مكة', o.hotel],
-      ['فندق المدينة', x.madinahHotel],
+      [tripSection?'فندق مكة':'الفندق أو المكان', o.hotel],
+      [tripSection?'فندق المدينة':'موقع آخر', x.madinahHotel],
       ['الطيران والانتقالات', x.transport],
-      ['سعر البرنامج', Number.isFinite(cost) && cost > 0 ? cost.toLocaleString('ar-EG') + ' جنيه مصري' : 'يُحدد عند الاستفسار']
+      ['سعر العرض', Number.isFinite(cost) && cost > 0 ? cost.toLocaleString('ar-EG') + ' جنيه مصري' : 'يُحدد عند الاستفسار']
     ]);
     root.append(table);
     if (x.includes) {
@@ -79,7 +92,7 @@
     const gallery=(o.gallery||[]).filter(v=>url(v&&v.url)&&v.url!==o.image_url);
     if(gallery.length){
       const wrap=node('div','mx-auto mt-5');wrap.style.maxWidth='900px';
-      wrap.append(sectionHeader('صور أخرى من الرحلة:'));
+      wrap.append(sectionHeader('صور أخرى من العرض:'));
       const photos=node('div');photos.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px';
       gallery.slice(0,12).forEach(function (pic) {
         const im=node('img','rounded-4 shadow');im.src=url(pic.url);im.alt=pic.name||'صورة رحلة عمرة';
@@ -88,6 +101,7 @@
       });
       wrap.append(photos);root.append(wrap);
     }
+    if(tripSection){
     const docs=node('div','required-doc mt-5 mb-5 mx-auto px-2');docs.style.maxWidth='900px';
     docs.append(sectionHeader('الأوراق والمستندات المطلوبة:'));
     const list=node('ul','mt-3');
@@ -99,30 +113,43 @@
       node('p','text-bold text-secondary lh-lg mt-3','للمزيد من التفاصيل يرجى التواصل معنا لنتمكن من خدمتكم بشكل أفضل.'));
     root.append(docs);container.append(root);
 
+    }
+
     const bookingSection=node('section','section bg-secondary');
     const center=node('div','container');
     const box=node('div','booking-form bg-white rounded-5 shadow p-5 mx-auto');
     box.style.maxWidth='900px';
-    box.append(node('h3','booking-title fs-1 text-center text-secondary mx-auto mt-2 mb-5','حجـز رحلـة عمـرة'));
-    const intro=node('p','text-regular text-center text-gray lh-lg','اكتب بياناتك في نموذج الحجز الخاص بسفير الحرمين. الطلب يحتاج تأكيدًا من فريق العمل.');
-    box.append(intro);
-    const iframe=node('iframe');
-    const params = new URLSearchParams({tripName:o.title||'',service:'عمرة',date:o.departure_date||''});
-    iframe.src=URL_BOOKING+'?'+params.toString();
-    iframe.title='نموذج حجز '+(o.title||'العمرة');
-    iframe.loading='lazy';iframe.style.cssText='display:block;border:0;width:100%;height:1420px;border-radius:12px;background:#faf8f3';
-    box.append(iframe);
-    const fallback=node('p','text-center mt-3');
-    const a=node('a','btn btn-secondary rounded-4 px-4 py-3','فتح استمارة الحجز في صفحة مستقلة');
-    a.href=iframe.src;a.target='_blank';a.rel='noopener noreferrer';fallback.append(a);
-    box.append(fallback);
+    box.append(node('h3','booking-title fs-1 text-center text-secondary mx-auto mt-2 mb-5',
+       o.category==='umrah'?'حجـز رحلـة عمـرة':'تفاصيل الحجز والاستفسار'));
+    if(o.category==='umrah'){
+      box.append(node('p','text-regular text-center text-gray lh-lg',
+        'اكتب بياناتك في نموذج الحجز الخاص بسفير الحرمين. الطلب يحتاج تأكيدًا من فريق العمل.'));
+      const iframe=node('iframe');
+      const params=new URLSearchParams({tripName:o.title||'',service:'عمرة',date:o.departure_date||''});
+      iframe.src=URL_BOOKING+'?'+params.toString();
+      iframe.title='نموذج حجز '+(o.title||'العمرة');
+      iframe.loading='lazy';
+      iframe.style.cssText='display:block;border:0;width:100%;height:1420px;border-radius:12px;background:#faf8f3';
+      box.append(iframe);
+      const fallback=node('p','text-center mt-3');
+      const a=node('a','btn btn-secondary rounded-4 px-4 py-3','فتح استمارة الحجز في صفحة مستقلة');
+      a.href=iframe.src;a.target='_blank';a.rel='noopener noreferrer';
+      fallback.append(a);box.append(fallback);
+    }else{
+      box.append(node('p','text-regular text-center text-gray lh-lg',
+        'للحجز أو الاستفسار عن هذا العرض، تواصل مع فريق سفير الحرمين أو افتح صفحة الخدمة.'));
+      const go=node('p','text-center mt-3');
+      const a=node('a','btn btn-secondary rounded-4 px-4 py-3','فتح صفحة '+category.name);
+      a.href=category.page;go.append(a);box.append(go);
+    }
     const wa=node('p','text-center mt-3');
     const contact=node('a','text-secondary text-bold','الاستفسار عبر واتساب');
     contact.href='https://wa.me/201150337383?text='+encodeURIComponent('السلام عليكم، أريد تفاصيل برنامج: '+(o.title||'عمرة'));
     contact.target='_blank';contact.rel='noopener noreferrer';wa.append(contact);box.append(wa);
-    const note=node('p','text-regular text-gray text-center mt-3',
-       'نموذج الحجز قد يتطلب تسجيل الدخول حتى يتم تفعيل وصول العملاء بصورة آمنة.');
-    box.append(note);
+    if(o.category==='umrah'){
+      box.append(node('p','text-regular text-gray text-center mt-3',
+        'نموذج الحجز قد يتطلب تسجيل الدخول حتى يتم تفعيل وصول العملاء بصورة آمنة.'));
+    }
     center.append(box);bookingSection.append(center);container.append(bookingSection);
   }
 
@@ -136,13 +163,13 @@
     const msg=node('div','container text-center text-regular text-gray');
     msg.style.padding='170px 15px 65px';
     msg.append(node('h2','mb-3','تعذر تحميل تفاصيل العرض'));
-    const p=node('p','','ارجع إلى برامج العمرة وحاول مرة أخرى.');msg.append(p);
-    const a=node('a','btn btn-secondary rounded-4 px-4','العودة إلى برامج العمرة');
-    a.href='umrah-programs.html';msg.append(a);container.append(msg);
+    const p=node('p','','ارجع إلى الموقع أو القسم المطلوب وحاول مرة أخرى.');msg.append(p);
+    const a=node('a','btn btn-secondary rounded-4 px-4','العودة للرئيسية');
+    a.href='index.html';msg.append(a);container.append(msg);
   }
 
-  container.append(node('p','text-center text-gray text-regular','جارٍ تحميل تفاصيل رحلة العمرة...'));
-  window.safirUmrahReceive=function(payload){
+  container.append(node('p','text-center text-gray text-regular','جارٍ تحميل تفاصيل العرض...'));
+  window.safirSiteOffersReceive=function(payload){
     if(payload&&payload.ok===true&&Array.isArray(payload.offers)){
       const found=find(payload);
       if(found){liveFound=true;render(found);}
@@ -153,7 +180,7 @@
     if(!liveFound){const offer=find(data);if(offer)render(offer);}
   }).catch(()=>{});
   const script=document.createElement('script');script.async=true;
-  script.src=URL_LIVE+'?format=jsonp&callback=safirUmrahReceive&t='+Date.now();
+  script.src=URL_LIVE+'?format=jsonp&callback=safirSiteOffersReceive&t='+Date.now();
   script.onerror=function(){script.remove();if(!currentOffer)showMissing()};
   document.head.append(script);
   setTimeout(showMissing,5500);
