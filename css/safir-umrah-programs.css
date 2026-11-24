@@ -1,0 +1,28 @@
+/* سفير الحرمين — برامج العمرة | نفس هوية الموقع الأصلية */
+#safir-umrah-root{--safir-ink:var(--primary,#22282c);--safir-gold:var(--secondary,#be944a);--safir-soft:var(--light-secondary,#f2eadb);--safir-muted:var(--gray,#65686a);direction:rtl}
+#safir-umrah-root,#safir-umrah-root button,#safir-umrah-root a{font-family:'Shamel-bold',Tahoma,Arial,sans-serif}
+#safir-umrah-root p,#safir-umrah-root small,#safir-umrah-root span,#safir-umrah-root .safir-umrah-description{font-family:'Shamel-thin',Tahoma,Arial,sans-serif}
+#safir-umrah-root .safir-umrah-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:24px;max-width:1170px;margin:0 auto}
+#safir-umrah-root .safir-umrah-card{overflow:hidden;border:1px solid #e9dfd0;border-radius:24px;background:#fff;box-shadow:0 10px 35px rgba(34,40,44,.08);display:flex;flex-direction:column;transition:transform .25s,box-shadow .25s}
+#safir-umrah-root .safir-umrah-card:hover{transform:translateY(-4px);box-shadow:0 18px 45px rgba(34,40,44,.12)}
+#safir-umrah-root .safir-umrah-picture{height:290px;width:100%;display:flex;align-items:center;justify-content:center;background:#f5f1e7;position:relative;overflow:hidden}
+#safir-umrah-root .safir-umrah-picture img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;max-width:100%;border:0}
+#safir-umrah-root .safir-image-empty{font-size:14px;line-height:1.8;color:#7a7163;padding:20px;text-align:center}
+#safir-umrah-root .safir-umrah-body{padding:24px;flex:1;display:flex;flex-direction:column;gap:11px;min-width:0}
+#safir-umrah-root .safir-umrah-tag{display:inline-block;align-self:flex-start;background:var(--safir-soft);border-radius:40px;color:#876424;padding:7px 13px;font-size:12px}
+#safir-umrah-root h3{font-family:'Shamel-bold',Tahoma,Arial,sans-serif;color:var(--safir-ink);font-size:21px;line-height:1.5;margin:0}
+#safir-umrah-root .safir-umrah-price{font-family:'Shamel-bold',Tahoma,Arial,sans-serif;font-size:25px;color:var(--safir-gold);margin:0}
+#safir-umrah-root .safir-umrah-price small{font-size:15px}
+#safir-umrah-root .safir-umrah-details{display:grid;gap:7px;margin:3px 0}
+#safir-umrah-root .safir-umrah-details div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;line-height:1.9;font-size:14px;color:var(--safir-muted)}
+#safir-umrah-root .safir-umrah-details b{color:var(--safir-ink);font-family:'Shamel-bold',Tahoma,Arial,sans-serif;font-size:13px}
+#safir-umrah-root .safir-umrah-description{color:var(--safir-muted);line-height:2;font-size:14px;white-space:pre-line;margin:0}
+#safir-umrah-root .safir-umrah-gallery{display:flex;gap:10px;overflow-x:auto;padding:8px 0}
+#safir-umrah-root .safir-umrah-gallery img{height:72px;width:90px;object-fit:contain;background:#faf8f2;border:1px solid #e9dfd0;border-radius:10px;flex:0 0 auto}
+#safir-umrah-root .safir-umrah-actions{margin-top:auto;padding-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+#safir-umrah-root .safir-umrah-action{background:var(--safir-gold);color:#fff;border-radius:30px;padding:12px 22px;text-decoration:none;display:inline-block;font-size:14px;text-align:center;border:1px solid var(--safir-gold);transition:background .2s}
+#safir-umrah-root .safir-umrah-action:hover{background:#ad8743;color:#fff}
+#safir-umrah-root .safir-umrah-alert{background:#fbf8f1;color:#74654b;border:1px solid #e9dfd0;border-radius:13px;padding:16px 22px;text-align:center;line-height:2;margin:15px auto;max-width:800px}
+#safir-umrah-root .safir-umrah-source{font-size:12px;color:#747474;text-align:center;margin:20px auto 0;line-height:1.8}
+#safir-umrah-root .safir-umrah-source a{color:#ad8743;text-decoration:underline}
+@media(max-width:740px){#safir-umrah-root .safir-umrah-grid{grid-template-columns:1fr;gap:17px}#safir-umrah-root .safir-umrah-picture{height:250px}#safir-umrah-root .safir-umrah-body{padding:20px}}
