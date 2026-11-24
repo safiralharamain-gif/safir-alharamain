@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<base target="_blank">
+<style>
+:root{--pine:#153e32;--pine2:#225c49;--gold:#bb9454;--sand:#f6f3eb;--white:#fff;--ink:#202d29;--muted:#73837c;--line:#e2e8e2;--red:#ae3d38}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Tahoma,Arial,sans-serif;color:var(--ink)}
+body{background:var(--sand);font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}
+.shell{display:grid;grid-template-columns:225px minmax(0,1fr);min-height:100vh}
+aside{background:var(--pine);color:white;padding:24px 14px;display:flex;flex-direction:column;gap:18px;min-height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:5px 9px 22px;border-bottom:1px solid #ffffff24}
+.brandmark{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--gold);font-size:23px}
+.brand h2{margin:0;font-size:17px;line-height:1.5}.brand small{color:#bfd3c9;font-size:11px}
+.side-label{font-size:11px;color:#a6c3b6;padding:0 12px}
+.nav{display:grid;gap:6px}.nav button{border:0;background:transparent;color:#d8e8df;text-align:right;padding:12px 14px;border-radius:11px;display:flex;gap:10px;align-items:center;font-size:14px}
+.nav button:hover,.nav button.active{background:#ffffff17;color:#fff}
+.nav button.active{box-shadow:inset -3px 0 var(--gold)}
+.side-foot{margin-top:auto;border-top:1px solid #ffffff26;padding:17px 10px 0;line-height:1.9;color:#ccded5;font-size:12px}
+main{padding:23px 30px 35px;min-width:0;max-width:1400px;width:100%;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:21px;flex-wrap:wrap}
+.top h1{font-size:26px;margin:0 0 5px}.top p{margin:0;color:var(--muted);line-height:1.7}
+.top-actions{display:flex;gap:8px;align-items:center}
+.btn{border:1px solid transparent;border-radius:10px;padding:11px 15px;display:inline-flex;justify-content:center;align-items:center;gap:8px;transition:background .15s;font-weight:bold}
+.btn-primary{background:var(--pine2);color:white}.btn-primary:hover{background:var(--pine)}
+.btn-secondary{background:#fff;color:var(--pine2);border-color:#b9ccc0}
+.btn-gold{background:var(--gold);color:white}.btn-danger{background:#fff3f1;color:var(--red);border-color:#edcfca}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-sm{font-size:12px;padding:7px 11px}
+.panel{display:none}.panel.active{display:block}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.stat,.card{background:var(--white);border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 25px #183c2910}
+.stat{padding:20px}.stat small{display:block;color:var(--muted);margin-bottom:9px}.stat strong{font-size:29px;color:var(--pine);display:block}.stat em{display:block;font-style:normal;color:#a08456;font-size:11px;margin-top:4px}
+.card{padding:21px;margin-bottom:18px}.card h2{margin:0 0 13px;font-size:17px}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}.card-head h2{margin:0}
+.muted{color:var(--muted)}.notice{padding:13px 16px;border-radius:12px;background:#fff9e8;border:1px solid #eddaa4;color:#6b562b;line-height:1.8;margin-bottom:16px}
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:17px;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:11px 13px;border:1px solid #d5ded7;border-radius:10px;background:white;min-width:170px}
+.toolbar input{flex:1;min-width:240px}.list{display:grid;gap:11px}
+.offer{background:white;border:1px solid var(--line);border-radius:15px;padding:13px;display:flex;align-items:center;gap:15px}
+.offer-cover{width:104px;height:87px;object-fit:contain;border-radius:11px;background:#f7f5f0;border:1px solid var(--line);flex-shrink:0}
+.offer-body{flex:1;min-width:0}.offer h3{margin:0 0 8px;font-size:15px}.offer p{margin:3px 0;color:var(--muted);font-size:12px;line-height:1.7}
+.offer-actions{display:flex;gap:7px;flex-wrap:wrap}.chip{display:inline-block;border-radius:999px;padding:5px 10px;background:#f2f3ee;color:#566c61;font-size:11px;font-weight:bold}
+.chip.published{background:#e3f4e9;color:#256f48}.chip.draft{background:#fff0d1;color:#8e641e}.chip.hidden{background:#eeeeee;color:#777}
+.empty{padding:35px;text-align:center;background:#fff;border:1px dashed #c9d6cc;border-radius:16px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{margin-bottom:16px}
+.field label{display:block;margin-bottom:7px;font-weight:bold;font-size:13px}
+.field small{display:block;color:var(--muted);margin-top:5px;line-height:1.7}
+.field input,.field select,.field textarea{width:100%;background:#fff;border:1px solid #d4e0d8;border-radius:10px;padding:12px 13px;outline:0;color:var(--ink)}
+.field textarea{resize:vertical;min-height:105px;line-height:1.8}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pine2);box-shadow:0 0 0 3px #2d7b5b18}
+.editor-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}
+.editor-grid .card{margin-bottom:16px}.editor-side{position:sticky;top:14px}
+.upload{border:2px dashed #b6cdbd;background:#f8fbf7;border-radius:16px;padding:24px;text-align:center;cursor:pointer;transition:background .15s}
+.upload:hover,.upload.drag{background:#eaf5ed;border-color:#498766}
+.upload b{display:block;font-size:16px;margin:10px 0 6px}.upload p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}
+.gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:17px}
+.media{border:1px solid #dce5db;border-radius:12px;background:#fff;overflow:hidden}
+.media .photo{height:155px;display:grid;place-items:center;background:#f5f4f0}
+.media img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.media-info{padding:9px;font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.media-actions{padding:7px;display:flex;gap:5px;flex-wrap:wrap;border-top:1px solid var(--line)}
+.media-actions button{font-size:11px;padding:6px;border:1px solid var(--line);background:white;border-radius:7px}
+.media-actions button.selected{background:#e6f3e8;color:#246541;border-color:#a5caa7}
+.preview{background:var(--sand);border-radius:13px;overflow:hidden;border:1px solid var(--line);margin:12px 0}
+.preview-image{height:180px;display:grid;place-items:center;background:#ebece5}
+.preview-image img{width:100%;height:100%;object-fit:contain}
+.preview-text{padding:13px}.preview-text b{display:block;font-size:15px}.preview-text small{line-height:2;color:var(--muted)}
+.actions-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tiny{font-size:12px;line-height:1.8;color:var(--muted)}
+.bookings{display:grid;gap:12px}.booking{background:white;border:1px solid var(--line);border-radius:14px;padding:15px;display:grid;grid-template-columns:1fr auto;gap:10px}
+.booking b{display:block}.booking p{font-size:12px;color:var(--muted);margin:8px 0;line-height:1.7}.booking select{padding:9px;border-radius:9px;border:1px solid var(--line);background:#fff}
+.loading{opacity:.6;pointer-events:none}#toast{position:fixed;bottom:21px;left:25px;z-index:100;background:#123e2f;color:white;border-radius:12px;padding:13px 18px;box-shadow:0 15px 40px #0003;max-width:500px;display:none;line-height:1.8}
+#toast.error{background:#8f302b}
+@media(max-width:1080px){.editor-grid{grid-template-columns:1fr}.editor-side{position:static}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.shell{grid-template-columns:1fr}aside{min-height:auto;padding:12px}.brand{padding:2px 9px 10px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.side-label,.side-foot{display:none}main{padding:15px}.top h1{font-size:22px}.gallery{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.offer{flex-wrap:wrap}.offer-actions{width:100%}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside>
+ <div class="brand"><div class="brandmark">🕋</div><div><h2>سفير الحرمين</h2><small>إدارة الموقع والمبيعات</small></div></div>
+ <div class="side-label">لوحة التحكم</div>
+ <nav class="nav" id="nav">
+  <button type="button" class="active" data-nav="home">◈ الرئيسية</button>
+  <button type="button" data-nav="offers">▣ برامج وعروض العمرة</button>
+  <button type="button" data-nav="bookings">◷ طلبات الحجوزات</button>
+ </nav>
+ <div class="side-foot">الصور تُرفع إلى Google Drive الخاص بك. الحجوزات تظل في الشيت الخاص ولا تُنشر للزوار.</div>
+</aside>
+<main>
+ <header class="top">
+  <div><h1 id="heading">لوحة التحكم</h1><p id="subtitle">نظرة شاملة على العروض والحجوزات</p></div>
+  <div class="top-actions"><button type="button" class="btn btn-secondary" id="refresh">↻ تحديث</button><button type="button" class="btn btn-gold" id="createOffer">+ عرض عمرة جديد</button></div>
+ </header>
+ <div class="panel active" id="view-home">
+  <div class="stats" id="stats"></div>
+  <div class="notice">من هنا تضيف عرض عمرة كاملًا وترفع صوره من جهازك. احفظه «مسودة» لحد ما تراجع كل حاجة، ثم اضغط «نشر» علشان يظهر في موقع سفير الحرمين.</div>
+  <div class="card"><div class="card-head"><h2>أحدث عروض العمرة</h2><button class="btn btn-secondary btn-sm" data-nav="offers">عرض الكل</button></div><div class="list" id="homeOffers"></div></div>
+  <div class="card"><div class="card-head"><h2>أحدث الحجوزات</h2><button class="btn btn-secondary btn-sm" data-nav="bookings">عرض الكل</button></div><div class="bookings" id="homeBookings"></div></div>
+ </div>
+ <div class="panel" id="view-offers">
+  <div class="toolbar"><input id="offerSearch" placeholder="ابحث باسم الرحلة أو الفندق..." aria-label="بحث العروض"><select id="offerFilter" aria-label="فلترة العروض"><option value="">كل الحالات</option><option>منشور</option><option>مسودة</option><option>مخفي</option><option>منتهي</option></select></div>
+  <div class="list" id="offersList"></div>
+ </div>
+ <div class="panel" id="view-bookings">
+  <div class="notice">طلبات العملاء تظهر هنا للمدير فقط. يمكنك متابعة كل حجز وتحديث حالته، بدون عرض بيانات العميل في الموقع العام.</div>
+  <div class="toolbar"><input id="bookingSearch" placeholder="ابحث باسم العميل أو رقم الهاتف أو رقم الطلب..." aria-label="بحث الحجوزات"></div>
+  <div class="bookings" id="bookingsList"></div>
+ </div>
+ <div class="panel" id="view-editor">
+  <div class="editor-grid">
+   <div>
+    <section class="card"><div class="card-head"><h2>معلومات عرض العمرة</h2><span class="chip">البيانات الأساسية</span></div>
+     <div class="field"><label>عنوان العرض *</label><input id="f-title" placeholder="مثال: عمرة رجب — برنامج ١٥ يومًا" maxlength="120"></div>
+     <div class="grid2">
+      <div class="field"><label>السعر بالجنيه المصري *</label><input id="f-price" type="number" min="0" step="1" placeholder="31000"></div>
+      <div class="field"><label>مدة الرحلة بالأيام</label><input id="f-duration" type="number" min="0" max="365" placeholder="15"></div>
+      <div class="field"><label>تاريخ السفر</label><input id="f-departure" type="date"></div>
+      <div class="field"><label>تاريخ العودة</label><input id="f-return" type="date"></div>
+      <div class="field"><label>فندق مكة</label><input id="f-hotel" maxlength="150" placeholder="اسم الفندق أو المنطقة"></div>
+      <div class="field"><label>فندق المدينة</label><input id="f-madinah" maxlength="150"></div>
+      <div class="field"><label>الانتقالات والطيران</label><input id="f-transport" maxlength="150" placeholder="الطيران / وسيلة النقل"></div>
+      <div class="field"><label>علامة ترويجية</label><input id="f-badge" maxlength="60" placeholder="مثال: الأكثر طلبًا"></div>
+     </div>
+     <div class="field"><label>وصف البرنامج</label><textarea id="f-description" rows="4" maxlength="2000" placeholder="تفاصيل البرنامج وأهم المزايا..."></textarea></div>
+     <div class="grid2">
+      <div class="field"><label>السعر يشمل</label><textarea id="f-includes" rows="3" maxlength="900" placeholder="الإقامة، النقل، الإرشاد..."></textarea></div>
+      <div class="field"><label>السعر لا يشمل</label><textarea id="f-excludes" rows="3" maxlength="900"></textarea></div>
+     </div>
+    </section>
+    <section class="card"><div class="card-head"><h2>صور العرض ومعرض الصور</h2><span class="chip">رفع مباشر من الجهاز</span></div>
+     <div class="upload" id="dropzone" tabindex="0" role="button" aria-label="رفع صور من جهازك">
+      <div style="font-size:29px">📷</div><b>اضغط هنا لرفع الصور أو اسحبها للمربع</b>
+      <p>يمكن اختيار صور متعددة. النظام يحسّن الحجم تلقائيًا ويحافظ على الأبعاد الأصلية.</p>
+      <input type="file" id="files" accept="image/png,image/jpeg,image/webp" multiple hidden>
+     </div>
+     <p class="tiny" id="uploadStatus">الأنواع المدعومة: JPG / PNG / WebP. يمكنك إضافة حتى 12 صورة للعرض. الملفات الكبيرة تُضغط قبل الرفع.</p>
+     <div class="gallery" id="gallery"></div>
+     <p class="tiny">اختر صورة رئيسية من المعرض لتظهر كغلاف العرض. إزالة صورة من المعرض لا تحذف الملف من Google Drive.</p>
+    </section>
+    <section class="card"><div class="card-head"><h2>حالة العرض والنشر</h2><span class="chip">تحكم كامل</span></div>
+     <div class="field"><label>حالة العرض</label><select id="f-status"><option value="مسودة">مسودة — لا يظهر للعملاء</option><option value="منشور">منشور — يظهر بالموقع</option><option value="مخفي">مخفي مؤقتًا</option><option value="منتهي">منتهي</option></select></div>
+     <div class="actions-bottom">
+      <button type="button" id="backOffers" class="btn btn-secondary">رجوع للعروض</button>
+      <div><button type="button" id="saveDraft" class="btn btn-secondary">حفظ كمسودة</button> <button type="button" id="saveOffer" class="btn btn-primary">حفظ العرض</button></div>
+     </div>
+    </section>
+   </div>
+   <aside class="editor-side" style="display:block;background:transparent;color:var(--ink);padding:0;min-height:0">
+     <div class="card"><h2>معاينة شكل العرض</h2><div class="preview"><div class="preview-image" id="previewImage">🕋</div><div class="preview-text"><b id="previewTitle">عنوان عرض العمرة</b><small id="previewMeta">السعر والفندق والتاريخ سيظهرون هنا</small></div></div>
+       <p class="tiny">الصور بتظهر كاملة من غير قص حتى لو الصورة طولية أو عرضية.</p>
+     </div>
+     <div class="card"><h2>نصائح قبل النشر</h2><p class="tiny">اكتب السعر المعتمد وتاريخ السفر وفندق مكة بوضوح. اختر صورة رئيسية ثم راجع المعاينة. اختار «مسودة» للاحتفاظ بالعرض بدون إظهاره للزوار.</p></div>
+   </aside>
+  </div>
+ </div>
+</main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+var state={offers:[],bookings:[],totals:{},editing:null,active:'home',busy:false,uploading:false};
+function el(id){return document.getElementById(id);}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function safeUrl(u){return /^https:\/\//i.test(String(u||''))?String(u):''}
+function toast(s,error){var t=el('toast');t.textContent=s;t.className=error?'error':'';t.style.display='block';clearTimeout(toast.handle);toast.handle=setTimeout(function(){t.style.display='none'},4500)}
+function call(name,arg){return new Promise(function(ok,fail){try{var r=google.script.run.withSuccessHandler(ok).withFailureHandler(fail);if(typeof arg==='undefined')r[name]();else r[name](arg)}catch(e){fail(e)}})}
+function fmtPrice(x){return Number(x||0).toLocaleString('ar-EG')+' ج.م'}
+function statusChip(x){return '<span class="chip '+(x==='منشور'?'published':x==='مسودة'?'draft':'hidden')+'">'+esc(x)+'</span>'}
+function show(view){
+ state.active=view;
+ ['home','offers','bookings','editor'].forEach(function(v){el('view-'+v).classList.toggle('active',v===view)});
+ document.querySelectorAll('[data-nav]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-nav')===view)});
+ var meta={home:['لوحة التحكم','نظرة شاملة على العروض والحجوزات'],offers:['عروض العمرة','إدارة البرامج والعروض المنشورة والمسودات'],bookings:['طلبات الحجوزات','متابعة العملاء وحالة طلباتهم'],editor:[state.editing&&state.editing.id?'تعديل عرض العمرة':'إضافة عرض عمرة','البيانات والصور والنشر في مكان واحد']};
+ el('heading').textContent=meta[view][0];el('subtitle').textContent=meta[view][1];
+ el('createOffer').style.display=view==='editor'?'none':'inline-flex';
+}
+function renderStats(){
+ var t=state.totals;
+ el('stats').innerHTML=[['العروض الكلية',t.offers||0,'برامج وعروض العمرة'],['العروض المنشورة',t.active||0,'ظاهرة للزوار'],['الحجوزات',t.bookings||0,'طلبات محفوظة'],['الحجوزات الجديدة',t.newBookings||0,'تحتاج متابعة']].map(function(x){return '<div class="stat"><small>'+x[0]+'</small><strong>'+x[1]+'</strong><em>'+x[2]+'</em></div>'}).join('');
+}
+function offerCard(x,index){
+ var image=safeUrl(x.image_url),cover=image?'<img class="offer-cover" alt="" src="'+esc(image)+'">':'<div class="offer-cover" style="display:grid;place-items:center;font-size:25px">🕋</div>';
+ return '<div class="offer">'+cover+'<div class="offer-body"><h3>'+esc(x.title)+'</h3><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+statusChip(x.status)+' <b>'+fmtPrice(x.price)+'</b></div><p>✈ '+esc(x.departure_date||'تاريخ غير محدد')+' · '+esc(x.hotel||'فندق مكة غير محدد')+'</p></div><div class="offer-actions"><button class="btn btn-secondary btn-sm" data-edit="'+index+'">تعديل العرض</button></div></div>';
+}
+function bookingCard(x,index){
+ return '<div class="booking"><div><b>'+esc(x.name)+' <span class="chip">'+esc(x.service)+'</span></b><p>الهاتف: <span dir="ltr">'+esc(x.phone)+'</span> | التاريخ: '+esc(x.created_at)+'</p><p>رقم الطلب: <span dir="ltr">'+esc(x.id)+'</span></p><p>'+esc(x.notes).slice(0,240)+'</p></div><div><label class="tiny">الحالة</label><select data-booking="'+index+'">'+['جديد','تم التواصل','مؤكد','ملغي'].map(function(v){return '<option '+(v===x.status?'selected':'')+'>'+v+'</option>'}).join('')+'</select></div></div>';
+}
+function render(){
+ renderStats();
+ var q=el('offerSearch').value.trim().toLowerCase(),status=el('offerFilter').value;
+ var offers=state.offers.filter(function(x){return(!status||x.status===status)&&(!q||(x.title+' '+x.hotel).toLowerCase().includes(q))});
+ el('offersList').innerHTML=offers.map(function(x){return offerCard(x,state.offers.indexOf(x))}).join('')||'<div class="empty">مفيش عروض مطابقة. اضغط «عرض عمرة جديد» للبدء.</div>';
+ el('homeOffers').innerHTML=state.offers.slice(0,4).map(function(x,i){return offerCard(x,i)}).join('')||'<div class="empty">لم تُضف أي عروض بعد.</div>';
+ var bq=el('bookingSearch').value.trim().toLowerCase();
+ var bookings=state.bookings.filter(function(x){return !bq||(x.name+' '+x.phone+' '+x.id).toLowerCase().includes(bq)});
+ el('bookingsList').innerHTML=bookings.map(function(x){return bookingCard(x,state.bookings.indexOf(x))}).join('')||'<div class="empty">لا توجد حجوزات مطابقة.</div>';
+ el('homeBookings').innerHTML=state.bookings.slice(0,3).map(function(x,i){return bookingCard(x,i)}).join('')||'<div class="empty">لا توجد حجوزات بعد.</div>';
+}
+async function refresh(){
+ el('refresh').disabled=true;
+ try{var r=await call('getDashboardData');state.offers=r.offers||[];state.bookings=r.bookings||[];state.totals=r.totals||{};render()}
+ catch(e){toast('فشل تحميل البيانات: '+(e.message||e),true)}
+ finally{el('refresh').disabled=false}
+}
+function emptyOffer(){return {id:'',title:'',price:'',departure_date:'',duration_days:'',hotel:'',description:'',status:'مسودة',image_url:'',gallery:[],extras:{}}}
+function fillEditor(){
+ var x=state.editing,z=x.extras||{};
+ var map={'f-title':x.title,'f-price':x.price,'f-duration':x.duration_days,'f-departure':x.departure_date,'f-return':z.returnDate,'f-hotel':x.hotel,'f-madinah':z.madinahHotel,'f-transport':z.transport,'f-badge':z.badge,'f-description':x.description,'f-includes':z.includes,'f-excludes':z.excludes,'f-status':x.status};
+ Object.keys(map).forEach(function(id){el(id).value=map[id]==null?'':map[id]});
+ renderGallery();preview();show('editor');
+}
+function newOffer(){state.editing=emptyOffer();fillEditor()}
+function edit(index){
+ var offer=state.offers[index];if(!offer){toast('العرض غير موجود',true);return}
+ state.editing=JSON.parse(JSON.stringify(offer));fillEditor();
+}
+function readEditor(){
+ var x=state.editing;if(!x)return null;
+ x.title=el('f-title').value.trim();x.price=el('f-price').value;
+ x.duration_days=el('f-duration').value;x.departure_date=el('f-departure').value;
+ x.hotel=el('f-hotel').value.trim();x.description=el('f-description').value.trim();x.status=el('f-status').value;
+ x.extras={returnDate:el('f-return').value,madinahHotel:el('f-madinah').value.trim(),transport:el('f-transport').value.trim(),badge:el('f-badge').value.trim(),includes:el('f-includes').value.trim(),excludes:el('f-excludes').value.trim()};
+ return x;
+}
+function preview(){
+ if(!state.editing)return;
+ var cover=safeUrl(state.editing.image_url);
+ el('previewImage').innerHTML=cover?'<img alt="معاينة العرض" src="'+esc(cover)+'">':'🕋';
+ el('previewTitle').textContent=el('f-title').value.trim()||'عنوان عرض العمرة';
+ el('previewMeta').textContent=(el('f-price').value?fmtPrice(el('f-price').value):'السعر غير محدد')+' · '+(el('f-hotel').value||'فندق مكة')+' · '+(el('f-departure').value||'التاريخ غير محدد');
+}
+function renderGallery(){
+ var x=state.editing;if(!x)return;
+ var gallery=x.gallery||[];
+ el('gallery').innerHTML=gallery.map(function(g,i){
+  var main=g.url===x.image_url;
+  return '<article class="media"><div class="photo"><img src="'+esc(safeUrl(g.url))+'" alt="'+esc(g.name||'صورة العرض')+'"></div><div class="media-info">'+esc(g.name||'صورة العمرة')+'<br>'+esc(g.width||'?')+' × '+esc(g.height||'?')+'</div><div class="media-actions"><button type="button" class="'+(main?'selected':'')+'" data-cover="'+i+'">'+(main?'★ الرئيسية':'تعيين رئيسية')+'</button><button type="button" data-remove="'+i+'">إزالة</button></div></article>';
+ }).join('');
+ if(!gallery.length)el('gallery').innerHTML='<div class="tiny">مفيش صور مرفوعة للعرض ده حتى الآن.</div>';
+}
+async function save(forceDraft){
+ if(!state.editing||state.uploading||state.busy)return;
+ var x=readEditor();
+ if(forceDraft){x.status='مسودة';el('f-status').value='مسودة'}
+ if(x.title.length<4){toast('اكتب اسم عرض واضح.',true);el('f-title').focus();return}
+ if(x.price===''||isNaN(Number(x.price))||Number(x.price)<0){toast('اكتب سعر صحيح.',true);el('f-price').focus();return}
+ if(x.status==='منشور'&&!x.image_url&&!confirm('العرض بدون صورة رئيسية. هل تريد نشره بهذا الشكل؟'))return;
+ state.busy=true;el('saveOffer').disabled=true;el('saveDraft').disabled=true;
+ try{var r=await call('saveOffer',x);toast(r.status==='منشور'?'تم نشر العرض بنجاح ✅':'تم حفظ العرض بنجاح ✅');await refresh();show('offers')}
+ catch(e){toast('لم يتم حفظ العرض: '+(e.message||e),true)}
+ finally{state.busy=false;el('saveOffer').disabled=false;el('saveDraft').disabled=false}
+}
+function readBlob(blob){return new Promise(function(ok,fail){var r=new FileReader();r.onload=function(){ok(String(r.result).split(',')[1])};r.onerror=fail;r.readAsDataURL(blob)})}
+function compress(file){
+ return new Promise(function(ok,fail){
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)){fail(Error('نوع الصورة غير مدعوم: '+file.name));return}
+  if(file.size>30*1024*1024){fail(Error('حجم الصورة الأصلية أكبر من 30 ميجابايت'));return}
+  var u=URL.createObjectURL(file),img=new Image();
+  img.onerror=function(){URL.revokeObjectURL(u);fail(Error('تعذر قراءة الصورة: '+file.name))};
+  img.onload=async function(){
+   URL.revokeObjectURL(u);
+   try{
+    var max=1800,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+    var width=Math.max(1,Math.round(img.naturalWidth*scale)),height=Math.max(1,Math.round(img.naturalHeight*scale));
+    var canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+    canvas.getContext('2d').drawImage(img,0,0,width,height);
+    var blob=await new Promise(function(resolve){canvas.toBlob(resolve,'image/webp',.83)});
+    var mime='image/webp';
+    if(!blob||blob.type!=='image/webp'){blob=await new Promise(function(resolve){canvas.toBlob(resolve,'image/jpeg',.82)});mime='image/jpeg'}
+    if(!blob)throw Error('تعذر تجهيز الصورة');
+    if(blob.size>4*1024*1024)throw Error('حجم الصورة بعد التحسين أكبر من المسموح');
+    ok({base64:await readBlob(blob),mime:mime,name:file.name,width:width,height:height});
+   }catch(e){fail(e)}
+  };
+  img.src=u;
+ });
+}
+async function uploadFiles(files){
+ if(!state.editing){toast('افتح محرر عرض أولاً',true);return}
+ if(state.uploading)return;
+ var list=Array.from(files).filter(Boolean),present=(state.editing.gallery||[]).length;
+ if(!list.length)return;
+ if(present+list.length>12){toast('الحد الأقصى 12 صورة لكل عرض',true);return}
+ state.uploading=true;el('files').disabled=true;el('saveOffer').disabled=true;el('saveDraft').disabled=true;
+ for(var i=0;i<list.length;i++){
+  try{
+   el('uploadStatus').textContent='جارٍ تحسين ورفع الصورة '+(i+1)+' من '+list.length+': '+list[i].name;
+   var payload=await compress(list[i]);
+   var res=await call('uploadOfferImage',payload);
+   state.editing.gallery=state.editing.gallery||[];
+   state.editing.gallery.push(res);
+   if(!state.editing.image_url)state.editing.image_url=res.url;
+   renderGallery();preview();
+  }catch(e){toast('تعذر رفع '+list[i].name+': '+(e.message||e),true);break}
+ }
+ state.uploading=false;el('files').disabled=false;el('files').value='';
+ el('saveOffer').disabled=false;el('saveDraft').disabled=false;
+ el('uploadStatus').textContent='اكتمل الرفع. اضغط «حفظ العرض» أو «حفظ كمسودة» لتسجيل الصور مع العرض.';
+ toast('تم تجهيز الصور للعرض. احفظ العرض الآن.');
+}
+document.addEventListener('click',function(e){
+ var nav=e.target.closest('[data-nav]');if(nav){show(nav.getAttribute('data-nav'));return}
+ var editBtn=e.target.closest('[data-edit]');if(editBtn){edit(+editBtn.getAttribute('data-edit'));return}
+ var coverBtn=e.target.closest('[data-cover]');if(coverBtn&&state.editing){
+  var g=state.editing.gallery[+coverBtn.getAttribute('data-cover')];if(g){state.editing.image_url=g.url;renderGallery();preview()}return;
+ }
+ var removeBtn=e.target.closest('[data-remove]');if(removeBtn&&state.editing){
+  var index=+removeBtn.getAttribute('data-remove'),g=state.editing.gallery[index];
+  if(!g)return;state.editing.gallery.splice(index,1);
+  if(state.editing.image_url===g.url)state.editing.image_url=state.editing.gallery[0]?state.editing.gallery[0].url:'';
+  renderGallery();preview();return;
+ }
+});
+document.addEventListener('change',async function(e){
+ var b=e.target.closest('[data-booking]');
+ if(b){var index=+b.getAttribute('data-booking'),booking=state.bookings[index],next=b.value;
+  if(!booking)return; b.disabled=true;
+  try{await call('setBookingStatus',{id:booking.id,status:next});toast('تم تعديل حالة الحجز');await refresh()}
+  catch(err){toast('تعذر التعديل: '+(err.message||err),true);b.disabled=false}
+ }
+});
+['f-title','f-price','f-hotel','f-departure'].forEach(function(id){el(id).addEventListener('input',preview)});
+el('refresh').onclick=refresh;el('createOffer').onclick=newOffer;el('backOffers').onclick=function(){show('offers')};
+el('saveOffer').onclick=function(){save(false)};el('saveDraft').onclick=function(){save(true)};
+el('offerSearch').oninput=render;el('offerFilter').onchange=render;el('bookingSearch').oninput=render;
+el('dropzone').onclick=function(e){if(e.target===el('files'))return;el('files').click()};
+el('dropzone').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();el('files').click()}};
+el('files').onchange=function(e){uploadFiles(e.target.files)};
+el('dropzone').ondragover=function(e){e.preventDefault();el('dropzone').classList.add('drag')};
+el('dropzone').ondragleave=function(){el('dropzone').classList.remove('drag')};
+el('dropzone').ondrop=function(e){e.preventDefault();el('dropzone').classList.remove('drag');uploadFiles(e.dataTransfer.files)};
+refresh();
+})();
+</script>
+</body>
+</html>
