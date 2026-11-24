@@ -14,6 +14,12 @@ function onOpen(){
   .addItem('فتح لوحة التحكم الاحترافية','openSafirAdmin')
   .addItem('تجهيز أعمدة الصور','setupSafirMedia').addToUi();
 }
+/** يمكن فتح اللوحة أيضًا كرابط إدارة خاص عند نشر تطبيق الويب بوصول «أنا فقط». */
+function doGet(){
+ return HtmlService.createHtmlOutputFromFile('Sidebar')
+  .setTitle('سفير الحرمين | لوحة التحكم')
+  .addMetaTag('viewport','width=device-width,initial-scale=1');
+}
 function openSafirAdmin(){
  setupSafirMedia();
  const out=HtmlService.createHtmlOutputFromFile('Sidebar')
