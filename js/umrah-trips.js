@@ -71,18 +71,20 @@
 
   function render() {
     holder.replaceChildren();
+    publishedOffers.slice().sort(function(a,b){
+      return (Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0);
+    }).forEach(function (trip) {
+      if (!trip || !trip.id || trip.status !== 'منشور') return;
+      holder.appendChild(photoCard(
+        trip.image_url, trip.title,
+        'details.html?offer=' + encodeURIComponent(trip.id), true
+      ));
+    });
     originalTrips.forEach(function (trip) {
       if (!trip || !trip.id) return;
       holder.appendChild(photoCard(
         trip.imgs, trip.tripTitle || 'برنامج عمرة',
         'details.html?id=' + encodeURIComponent(trip.id), false
-      ));
-    });
-    publishedOffers.forEach(function (trip) {
-      if (!trip || !trip.id || trip.status !== 'منشور') return;
-      holder.appendChild(photoCard(
-        trip.image_url, trip.title,
-        'details.html?offer=' + encodeURIComponent(trip.id), true
       ));
     });
     if (!holder.children.length) {
