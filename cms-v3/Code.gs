@@ -6,6 +6,7 @@
  */
 const SAFIR = {
   offersTab:'عروض العمرة', bookingsTab:'طلبات الحجز',
+ categories:['umrah','hajj','internal','hotel','flight','visa','transport','barcode','general'],
   mediaFolderProperty:'SAFIR_MEDIA_FOLDER_ID',
   whatsapp:'201150337383'
 };
@@ -34,8 +35,8 @@ function sheet_(name){
 }
 function setupSafirMedia(){
  const sh=sheet_(SAFIR.offersTab);
- if(sh.getMaxColumns()<12)sh.insertColumnsAfter(sh.getMaxColumns(),12-sh.getMaxColumns());
- ['الصورة الرئيسية','معرض الصور','بيانات إضافية'].forEach((v,i)=>{
+ if(sh.getMaxColumns()<14)sh.insertColumnsAfter(sh.getMaxColumns(),14-sh.getMaxColumns());
+ ['الصورة الرئيسية','معرض الصور','بيانات إضافية','القسم','تاريخ الإضافة'].forEach((v,i)=>{
   if(!sh.getRange(1,i+10).getValue())sh.getRange(1,i+10).setValue(v);
  });
  sh.setFrozenRows(1);sh.setRightToLeft(true);
@@ -69,15 +70,20 @@ function offers_(){
  setupSafirMedia();
  const sh=sheet_(SAFIR.offersTab),last=sh.getLastRow();
  if(last<2)return [];
- return sh.getRange(2,1,last-1,12).getValues()
-  .filter(r=>r[0]).map(r=>({
+ return sh.getRange(2,1,last-1,14).getValues()
+  .map((r,i)=>({r,row:i+2})).filter(x=>x.r[0]).map(({r,row})=>({
    id:String(r[0]),title:str_(r[1],120),price:Number(r[2])||0,
    departure_date:date_(r[3]),duration_days:Number(r[4])||0,
    hotel:str_(r[5],180),description:String(r[6]||''),
    status:str_(r[7],20)||'مسودة',updated_at:date_(r[8]),
    image_url:imageUrl_(r[9]),gallery:cleanGallery_(parseJson_(r[10],[])),
-   extras:parseJson_(r[11],{})
-  })).reverse();
+   extras:parseJson_(r[11],{}),
+   category:SAFIR.categories.includes(str_(r[12],30))?str_(r[12],30):'umrah',
+   created_at:date_(r[13]||r[8]),_row:row
+  })).sort((a,b)=>{
+    const aDate=Date.parse(a.created_at)||0,bDate=Date.parse(b.created_at)||0;
+    return bDate-aDate||b._row-a._row;
+  });
 }
 function bookings_(){
  const sh=sheet_(SAFIR.bookingsTab),last=sh.getLastRow();
@@ -110,6 +116,8 @@ function findRow_(sh,id){
 function saveOffer(data){
  if(!data||typeof data!=='object')throw Error('البيانات غير صحيحة.');
  const title=str_(data.title,120),price=Number(data.price),status=str_(data.status,20);
+ const category=str_(data.category,30)||'umrah';
+ if(!SAFIR.categories.includes(category))throw Error('القسم المحدد غير صحيح.');
  if(title.length<4)throw Error('اكتب عنوانًا واضحًا للعرض.');
  if(!Number.isFinite(price)||price<0)throw Error('السعر غير صحيح.');
  if(!['مسودة','منشور','مخفي','منتهي'].includes(status))throw Error('حالة العرض غير صحيحة.');
@@ -134,9 +142,10 @@ function saveOffer(data){
   const target=str_(data.id,100),row=target?findRow_(sh,target):-1;
   if(target&&row<0)throw Error('العرض المطلوب تعديله لم يعد موجودًا. حدّث اللوحة.');
   const id=row>0?target:Utilities.getUuid();
+  const createdAt=row>0?str_(sh.getRange(row,14).getValue()||sh.getRange(row,9).getValue(),60):new Date().toISOString();
   const values=[id,plain_(title,120),price,date,duration,
     plain_(data.hotel,150),plain_(data.description,2000),status,new Date().toISOString(),
-    image,JSON.stringify(gallery),JSON.stringify(extras)];
+    image,JSON.stringify(gallery),JSON.stringify(extras),category,createdAt];
   if(row>0)sh.getRange(row,1,1,values.length).setValues([values]);
   else sh.appendRow(values);
   SpreadsheetApp.flush();
