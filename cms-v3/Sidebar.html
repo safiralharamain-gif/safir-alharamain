@@ -4,9 +4,11 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_blank">
 <style>
-:root{--pine:#153e32;--pine2:#225c49;--gold:#bb9454;--sand:#f6f3eb;--white:#fff;--ink:#202d29;--muted:#73837c;--line:#e2e8e2;--red:#ae3d38}
-*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Tahoma,Arial,sans-serif;color:var(--ink)}
-body{background:var(--sand);font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}
+@font-face{font-family:'Shamel-bold';src:url('https://safiralharamain-gif.github.io/safir-alharamain/fonts/Shamel-Bold.ttf');font-display:swap}
+@font-face{font-family:'Shamel-thin';src:url('https://safiralharamain-gif.github.io/safir-alharamain/fonts/Shamel-thin.ttf');font-display:swap}
+:root{--pine:#22282c;--pine2:#22282c;--gold:#be944a;--sand:#fbf8f1;--white:#fff;--ink:#22282c;--muted:#65686a;--line:#eadfcf;--red:#ae3d38}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:'Shamel-bold',Tahoma,Arial,sans-serif;color:var(--ink)}
+body{background:var(--sand);font-size:14px}button,input,select,textarea{font:inherit}p,input,select,textarea,.tiny,.muted{font-family:'Shamel-thin',Tahoma,Arial,sans-serif}button{cursor:pointer}
 .shell{display:grid;grid-template-columns:225px minmax(0,1fr);min-height:100vh}
 aside{background:var(--pine);color:white;padding:24px 14px;display:flex;flex-direction:column;gap:18px;min-height:100vh}
 .brand{display:flex;align-items:center;gap:10px;padding:5px 9px 22px;border-bottom:1px solid #ffffff24}
@@ -51,8 +53,8 @@ main{padding:23px 30px 35px;min-width:0;max-width:1400px;width:100%;margin:0 aut
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pine2);box-shadow:0 0 0 3px #2d7b5b18}
 .editor-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}
 .editor-grid .card{margin-bottom:16px}.editor-side{position:sticky;top:14px}
-.upload{border:2px dashed #b6cdbd;background:#f8fbf7;border-radius:16px;padding:24px;text-align:center;cursor:pointer;transition:background .15s}
-.upload:hover,.upload.drag{background:#eaf5ed;border-color:#498766}
+.upload{border:2px dashed #b6cdbd;background:#fbf8f1;border-radius:16px;padding:24px;text-align:center;cursor:pointer;transition:background .15s}
+.upload:hover,.upload.drag{background:#f2eadb;border-color:#be944a}
 .upload b{display:block;font-size:16px;margin:10px 0 6px}.upload p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}
 .gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:17px}
 .media{border:1px solid #dce5db;border-radius:12px;background:#fff;overflow:hidden}
