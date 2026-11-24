@@ -22,7 +22,22 @@ function blank(type){
 }
 function loadDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'null')}catch(e){return null}}
 function saveDraft(){collect();localStorage.setItem(DRAFT_KEY,JSON.stringify(data));renderStats();toast('تم حفظ المسودة تلقائيًا')}
-function field(label,name,val='',type='text',extra=''){return '<div class="field"><label>'+label+'</label><input '+extra+' data-f="'+name+'" type="'+type+'" value="'+esc(val)+'"></div>'}
+function field(label,name,val='',type='text',extra=''){
+ const imageField=(name==='image'||name==='cover');
+ return '<div class="field"><label>'+label+'</label><input '+extra+' data-f="'+name+'" type="'+type+'" value="'+esc(val)+'"'+(imageField?' data-image-url="true"':'')+'>'+(imageField?'<div class="image-preview" data-preview><span class="image-info">ضع رابط الصورة أو مسارها، وستظهر معاينة بمقاسها الصحيح هنا.</span></div>':'')+'</div>';
+}
+function updateImagePreview(input){
+ const box=input.closest('.field')?.querySelector('[data-preview]');if(!box)return;
+ const value=input.value.trim();box.replaceChildren();
+ const note=document.createElement('span');note.className='image-info';
+ if(!value){note.textContent='ضع رابط الصورة أو مسارها، وستظهر معاينة بمقاسها الصحيح هنا.';box.append(note);return;}
+ if(/^(?:javascript:|data:|file:)/i.test(value)){note.textContent='استخدم رابط https أو مسار صورة داخل موقعك.';note.className+=' missing';box.append(note);return;}
+ const img=new Image();img.loading='lazy';img.alt='معاينة الصورة';img.referrerPolicy='no-referrer';
+ note.textContent='جارٍ تحميل الصورة...';box.append(img,note);
+ img.onload=()=>{note.textContent='مقاس الصورة الأصلي: '+img.naturalWidth+' × '+img.naturalHeight+' بكسل — ستظهر كاملة بدون قص أو تمطيط.';};
+ img.onerror=()=>{img.remove();note.textContent='لم نستطع تحميل الصورة. راجع الرابط بعد رفع الملف.';note.className+=' missing';};
+ try{img.src=new URL(value,document.querySelector('base')?.href||new URL('../../',location.href)).href;}catch(_){img.onerror();}
+}
 function textarea(label,name,val=''){return '<div class="field"><label>'+label+'</label><textarea data-f="'+name+'">'+esc(val)+'</textarea></div>'}
 function editorShell(type,item,i,body){return '<div class="editor" data-type="'+type+'" data-index="'+i+'"><div class="editor-title"><h3>'+esc(item.title||item.question||('عنصر '+(i+1)))+'</h3><div><button class="btn outline small" data-toggle>'+((item.visible===false)?'إظهار':'إخفاء')+'</button> <button class="btn danger small" data-delete>حذف</button></div></div><div class="mt">'+body+'</div></div>'}
 function renderList(type){
@@ -42,7 +57,11 @@ function renderList(type){
  bindEditors();
 }
 function bindEditors(){
- $$('.editor input,.editor textarea,.editor select').forEach(el=>{el.oninput=saveDraft;el.onchange=saveDraft});
+ $('.editor input,.editor textarea,.editor select').forEach(el=>{
+   el.oninput=()=>{if(el.dataset.imageUrl)updateImagePreview(el);saveDraft()};
+   el.onchange=()=>{if(el.dataset.imageUrl)updateImagePreview(el);saveDraft()};
+ });
+ $('[data-image-url]').forEach(updateImagePreview);
  $$('[data-delete]').forEach(btn=>btn.onclick=()=>{const e=btn.closest('.editor'),type=e.dataset.type,i=+e.dataset.index;if(confirm('حذف العنصر؟')){data[type].splice(i,1);renderList(type);saveDraft()}});
  $$('[data-toggle]').forEach(btn=>btn.onclick=()=>{const e=btn.closest('.editor'),type=e.dataset.type,i=+e.dataset.index;data[type][i].visible=data[type][i].visible===false?true:false;renderList(type);saveDraft()});
 }
