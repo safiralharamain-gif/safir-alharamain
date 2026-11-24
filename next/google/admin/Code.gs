@@ -48,8 +48,7 @@ function imageUrl_(v){
  const s=str_(v,1000);
  if(!s)return '';
  try{
-  const u=new URL(s);
-  return u.protocol==='https:'?s:'';
+  return /^https:\/\/[^\s<>"']+$/i.test(s)?s:'';
  }catch(_){return '';}
 }
 function cleanGallery_(gallery){
@@ -139,6 +138,7 @@ function saveOffer(data){
  }finally{lock.releaseLock()}
 }
 function setBookingStatus(id,status){
+ if(id&&typeof id==='object'){status=id.status;id=id.id;}
  if(!['جديد','تم التواصل','مؤكد','ملغي'].includes(status))throw Error('حالة غير صحيحة.');
  const lock=LockService.getDocumentLock()||LockService.getScriptLock();
  lock.waitLock(15000);
