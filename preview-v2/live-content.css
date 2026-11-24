@@ -5,7 +5,7 @@
 .safir-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:30px}
 .safir-preview-card{background:#fff;border:1px solid #eadfcf;border-radius:24px;overflow:hidden;box-shadow:0 10px 30px rgba(34,40,44,.06);height:100%}
 .safir-preview-card .cover{height:220px;background:#f2eadb;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.safir-preview-card .cover img{width:100%;height:100%;object-fit:cover}
+.safir-preview-card .cover img{width:100%;height:100%;object-fit:contain;object-position:center;display:block;padding:8px}
 .safir-preview-card .body{padding:22px}
 .safir-preview-badge{display:inline-block;background:#22282c;color:#fff;border-radius:30px;padding:6px 12px;font-size:13px;margin-bottom:9px}
 .safir-preview-meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
@@ -18,3 +18,9 @@
 .safir-preview-faq summary{cursor:pointer;font-family:'Shamel-bold'}
 @media(max-width:992px){.safir-preview-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.safir-preview-grid{grid-template-columns:1fr}.safir-preview-card .cover{height:200px}}
+
+/* صور المدير: نسب الأبعاد الأصلية بدون تشويه أو قص، مع مساحة عرض متجاوبة */
+.safir-preview-card .cover{height:auto;min-height:200px;aspect-ratio:4/3;max-width:100%}
+.safir-preview-card .cover img{width:100%;height:100%;max-height:340px;object-fit:contain;object-position:center;display:block}
+.safir-preview-card .cover:has(img){background:#faf8f3}
+@media(max-width:700px){.safir-preview-card .cover{height:auto;min-height:160px;aspect-ratio:4/3}}
