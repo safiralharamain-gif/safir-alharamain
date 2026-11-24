@@ -53,9 +53,9 @@
 <body>
 <section dir="rtl" style="max-width:1100px;margin:20px auto;padding:20px 24px;background:#f7f2e8;border:1px solid #e7d7b4;border-radius:18px;font-family:Tahoma,Arial,sans-serif;color:#244b40">
 <h2 style="font-size:1.5rem">الحجز الإلكتروني — سفير الحرمين</h2>
-<p>نموذج الحجز الأصلي موجود أدناه كما هو. ويمكن تجربة تسجيل طلب مختصر في Google Sheets من الرابط التالي.</p>
+<p>تم توصيل حقول حجز العمرة الكاملة بنظام جوجل. يظهر النموذج داخل صفحة الموقع، وفي حالة تعذر عرضه يمكن فتحه في صفحة مستقلة.</p>
 <p><a target="_blank" rel="noopener noreferrer" href="https://script.google.com/macros/s/AKfycbzDnlNzZLnZ9d32pqQ9mXW8DF-BpoY-YD8aCv1yV-SuDcWN3Z2SqwKwwJPSbDIkXwAm/exec" style="display:inline-block;padding:12px 22px;background:#175846;color:white;border-radius:9px;text-decoration:none">فتح الحجز المرتبط بجوجل</a></p>
-<p style="font-size:.9rem;color:#815b23">الحجز المرتبط بجوجل متاح حاليًا لحساب المدير للاختبار فقط، ولا يستقبل زوار الموقع بعد. نموذج الحجز الأصلي مستمر في مساره السابق.</p></section>
+<p style="font-size:.9rem;color:#815b23">الحجز المرتبط بجوجل متاح حاليًا لحساب المدير للاختبار فقط، ولا يستقبل زوار الموقع بعد. لا يزال استقبال طلبات العملاء غير مُفعّل للجمهور.</p></section>
 
   <!-- scroll up -->
   <div class="scrollUp">
@@ -223,224 +223,12 @@
     <div class="container">
       <div class="booking-form bg-white rounded-5 shadow p-5 mx-auto" style="max-width: 900px;">
         <h3 class="booking-title fs-1 text-center text-secondary mx-auto mt-2 mb-5">حجـز رحلـة عمـرة</h3>
-        <form class="text-regular" action="">
-
-          <div class="row mb-3">
-            <div class="col">
-              <label class="text-gray mb-1 mb-1" for="name">الاسم</label>
-              <input type="text" name="name" id="name" class="form-control form-control-lg rounded-4">
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1" for="phone">الموبايل</label>
-              <input type="text" name="phone" id="phone" class="form-control form-control-lg rounded-4">
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col">
-              <label class="text-gray mb-1 mb-1" for="address">العنوان</label>
-              <input type="text" name="address" id="address" class="form-control form-control-lg rounded-4">
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1" for="governorate">المحافظة</label>
-              <input type="text" name="governorate" id="governorate" class="form-control form-control-lg rounded-4">
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col">
-              <label class="text-gray mb-1" for="trip-name">الرحلـة</label>
-              <input type="text" name="trip-name" id="trip-name" class="form-control form-control-lg rounded-4">
-
-              <!-- <div class="dropdown">
-                <button class="select text-start btn bg-white border rounded-4 w-100 dropdown-toggle" name="trip-name"
-                  id="trip-name" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  *حدد الرحلة
-                </button>
-                <ul class="dropdown-menu rounded-4">
-                  <li class="dropdown-item">عمرة ترانزيت</li>
-                  <li class="dropdown-item">عرض خاص</li>
-                  <li class="dropdown-item">رحلة عمرة المولد النبوي</li>
-                  <li class="dropdown-item">رحلة عمرة اقتصادي</li>
-                  <li class="dropdown-item">رحلة عمرة 3 نجــوم</li>
-                  <li class="dropdown-item">رحلة عمرة 4 نجــوم</li>
-                  <li class="dropdown-item">رحلة عمرة 5 نجــوم</li>
-                  <li class="dropdown-item">رحلة عمرة رجــب</li>
-                  <li class="dropdown-item">رحلة عمرة شعبـان</li>
-                  <li class="dropdown-item">رحلة عمرة شعبـان رمضـان</li>
-                  <li class="dropdown-item">رحلة عمرة رمضــان</li>
-                </ul>
-              </div> -->
-
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1 mb-1">تاريخ الرحلـة</label>
-              <div class="form-control form-control-lg rounded-4 ps-2 pb-0"
-                style="min-height: 46px; padding-top: .35rem ;">
-                <input type="text" class="day p-0 pt-2 border-0 text-center" placeholder="يوم" style="width: 35px;">
-                <span class="d-inline-block text-gray fs-6 mt-1 user-select-none">/</span>
-                <input type="text" class="month p-0 pt-2 border-0 text-center" placeholder="شهر" style="width: 35px;">
-                <span class="d-inline-block text-gray fs-6 mt-1 user-select-none">/</span>
-                <input type="text" class="year p-0 pt-2 border-0 text-center" style="width: 55px;">
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-4">
-            <div class="col">
-              <label class="text-gray mb-1" for="adults-count">عدد الأفراد (الكبار)</label>
-              <input type="text" name="adults-count" id="adults-count" class="form-control form-control-lg rounded-4">
-            </div>
-            <div class="col">
-              <label class="text-gray mb-1" for="children-count">عدد الأفراد (الصغار)</label>
-              <input type="text" name="children-count" id="children-count"
-                class="form-control form-control-lg rounded-4">
-            </div>
-          </div>
-
-          <span class="text-gray d-block mb-3">نوع الغرفة</span>
-          <div class="row row-cols-sm-2 row-cols-md-3 row-cols-lg-5 mb-4" style="padding-right: 12px;">
-
-            <div class="col form-check mb-3">
-              <input class="form-check-input" type="radio" name="room-type" id="five">
-              <label class="form-check-label" for="five">
-                خماسـي
-              </label>
-            </div>
-
-            <div class="col form-check mb-3 ">
-              <input class="form-check-input" type="radio" name="room-type" id="five-four">
-              <label class="form-check-label max-content" for="five-four">
-                خماسـي / رباعـي
-              </label>
-            </div>
-
-            <div class="col form-check mb-3">
-              <input class="form-check-input" type="radio" name="room-type" id="four" checked>
-              <label class="form-check-label" for="four">
-                رباعـي
-              </label>
-            </div>
-
-            <div class="col form-check mb-3">
-              <input class="form-check-input" type="radio" name="room-type" id="three">
-              <label class="form-check-label" for="three">
-                ثلاثـي
-              </label>
-            </div>
-
-            <div class="col form-check">
-              <input class="form-check-input" type="radio" name="room-type" id="two">
-              <label class="form-check-label" for="two">
-                ثنائــي
-              </label>
-            </div>
-
-
-          </div>
-
-          <div class="row mb-4">
-            <span class="text-gray mb-3">الوجبــات</span>
-            <div class="d-flex">
-              <div class="form-check m-left">
-                <input class="form-check-input" type="radio" name="meals" id="meals-yes">
-                <label class="form-check-label mt-2px" for="meals-yes">
-                  نعم
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="meals" id="meals-no" checked>
-                <label class="form-check-label mt-2px" for="meals-no">
-                  لا
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-4">
-            <span class="text-gray mb-3">طريقة الدفع</span>
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-auto ps-4">
-              <div class="col form-check me-lg-5 mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-cash" checked>
-                <label class="form-check-label mt-2px" for="payment-cash">
-                  كاش
-                </label>
-              </div>
-              <div class="col form-check me-lg-5 mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-wallet-cash">
-                <label class="form-check-label mt-2px max-content" for="payment-wallet-cash">
-                  محفظة كاش
-                </label>
-              </div>
-              <div class="col form-check me-lg-5 mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-bank">
-                <label class="form-check-label mt-2px max-content" for="payment-bank">
-                  تحويل بنكى
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="payment-method" id="payment-visa">
-                <label class="form-check-label mt-2px" for="payment-visa">
-                  فيزا
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-4" style="margin-top: -1rem;">
-            <label class="form-label text-gray" for="msg">رسالــة / استفســار</label>
-            <textarea class="form-control rounded-4" id="msg" rows="5" style="padding: 1rem;"></textarea>
-          </div>
-
-          <div class="row">
-            <span class="text-gray mb-3">مين بلغك بالرحلة ؟</span>
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 ps-4">
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="friend" checked>
-                <label class="form-check-label mt-2px" for="friend">
-                  صديق رشحنا ليك
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="by-facebook">
-                <label class="form-check-label mt-2px" for="by-facebook">
-                  عن طريق الفيسبوك
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="by-whats">
-                <label class="form-check-label mt-2px max-content" for="by-whats">
-                  عن طريق الواتساب
-                </label>
-              </div>
-              <div class="col form-check mb-3">
-                <input class="form-check-input" type="radio" name="who-told-you" id="by-web">
-                <label class="form-check-label mt-2px max-content" for="by-web">
-                  عن طريق الموقع
-                </label>
-              </div>
-              <div class="col form-check">
-                <input class="form-check-input" type="radio" name="who-told-you" id="former-client">
-                <label class="form-check-label mt-2px max-content" for="former-client">
-                  عميل سابق
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-5">
-            <button type="button" class="send btn btn-secondary btn-lg rounded-4 px-5 d-inline-flex align-items-center"
-              style="padding-top: .75rem; width: 200px;">
-              <span class="mx-2">إرسال</span>
-              <img src="./img/icons/send.svg" width="25px" alt="send-icon" style="margin-top: -4px;">
-            </button>
-            <button type="button" class="cencel btn btn-light btn-lg transition rounded-4 px-5 ms-3"
-              style="padding-top: .75rem; width: 200px;">
-              إلغاء
-            </button>
-          </div>
-
-        </form>
+        <div dir="rtl" class="text-regular">
+          <p class="text-center text-gray mb-3">نفس بيانات نموذج حجز العمرة الأصلي، وتُحفظ مباشرةً في قاعدة بيانات سفير الحرمين على Google Sheets عند الإرسال.</p>
+          <iframe title="استمارة حجز العمرة لدى سفير الحرمين" src="https://script.google.com/macros/s/AKfycbzDnlNzZLnZ9d32pqQ9mXW8DF-BpoY-YD8aCv1yV-SuDcWN3Z2SqwKwwJPSbDIkXwAm/exec" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" style="width:100%;height:1500px;max-width:100%;border:0;border-radius:16px;background:#f8f6ef" scrolling="yes"></iframe>
+          <p class="text-center mt-3"><a href="https://script.google.com/macros/s/AKfycbzDnlNzZLnZ9d32pqQ9mXW8DF-BpoY-YD8aCv1yV-SuDcWN3Z2SqwKwwJPSbDIkXwAm/exec" target="_blank" rel="noopener noreferrer" class="btn btn-secondary rounded-4 px-4">فتح نموذج الحجز في صفحة مستقلة</a></p>
+          <p class="text-center" style="font-size:13px;color:#765c2c">هذا النموذج متاح حاليًا للمدير فقط حتى تفعيل استقبال العملاء بشكل آمن. لا يُعد إرسال الطلب تأكيدًا للحجز.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -635,7 +423,7 @@
   <script src="./js/SharePage.js" defer></script>
   <script src="./js/scroll-up.js" defer></script>
   <script src="./js/send-to-whatsapp.js" defer></script>
-  <script src="./js/umrah-booking.js" defer></script>
+  
   <script>function scrollToUp(){scrollTo(0,0)}</script>
 </body>
 </html>
