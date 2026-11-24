@@ -13,41 +13,53 @@ function json_(v){try{return JSON.parse(String(v||'{}'))||{}}catch(_){return {}}
 /* JSONP read-only endpoint for GitHub Pages (never expose bookings) */
 function publicOffersPayload_(){
  const sh=SpreadsheetApp.openById(SAFIR_PUBLIC_SHEET_ID).getSheetByName('عروض العمرة');
- if(!sh) return {ok:true,offers:[],updatedAt:new Date().toISOString()};
- const last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,12).getValues():[];
- const offers=rows.filter(r=>String(r[7]).trim()==='منشور').reverse().map(r=>{
-  const ex=json_(r[11]),raw=json_(r[10]);
-  const gallery=(Array.isArray(raw)?raw:[]).slice(0,12).map(x=>({
-   url:url_(x&&x.url),name:text_(x&&x.name,100)
-  })).filter(x=>x.url);
-  return {
-   id:text_(r[0],100),title:text_(r[1],120),price:Number(r[2])||0,
-   departure_date:date_(r[3]),duration_days:Number(r[4])||0,
-   hotel:text_(r[5],150),description:text_(r[6],1800),status:'منشور',
-   image_url:url_(r[9]),gallery,
-   extras:{
-    madinahHotel:text_(ex.madinahHotel,150),returnDate:text_(ex.returnDate,30),
-    transport:text_(ex.transport,150),includes:text_(ex.includes,900),
-    excludes:text_(ex.excludes,900),badge:text_(ex.badge,60)
-   }
-  };
+ if(!sh)return {ok:true,offers:[],updatedAt:new Date().toISOString()};
+ const last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,14).getValues():[];
+ const categories=['umrah','hajj','internal','hotel','flight','visa','transport','barcode','general'];
+ const offers=rows.map((r,i)=>({r,row:i+2}))
+  .filter(o=>String(o.r[7]).trim()==='منشور')
+  .map(({r,row})=>{
+   const ex=json_(r[11]),raw=json_(r[10]);
+   const gallery=(Array.isArray(raw)?raw:[]).slice(0,12).map(x=>({
+    url:url_(x&&x.url),name:text_(x&&x.name,100)
+   })).filter(x=>x.url);
+   const category=text_(r[12],30)||'umrah';
+   return {
+    id:text_(r[0],100),title:text_(r[1],120),price:Number(r[2])||0,
+    departure_date:date_(r[3]),duration_days:Number(r[4])||0,
+    hotel:text_(r[5],150),description:text_(r[6],1800),status:'منشور',
+    category:categories.includes(category)?category:'umrah',
+    created_at:text_(r[13]||r[8],60),_row:row,
+    image_url:url_(r[9]),gallery,
+    extras:{
+     madinahHotel:text_(ex.madinahHotel,150),returnDate:text_(ex.returnDate,30),
+     transport:text_(ex.transport,150),includes:text_(ex.includes,900),
+     excludes:text_(ex.excludes,900),badge:text_(ex.badge,60)
+    }
+   };
+  });
+ offers.sort((a,b)=>{
+   const ad=Date.parse(a.created_at)||0,bd=Date.parse(b.created_at)||0;
+   return bd-ad||b._row-a._row;
  });
+ offers.forEach(x=>delete x._row);
  return {ok:true,offers,updatedAt:new Date().toISOString()};
 }
 
 function doGet(e){
  // Only a fixed callback is supported, avoiding arbitrary script execution.
  const p=(e&&e.parameter)||{};
- if(p.format==='jsonp'&&p.callback==='safirUmrahReceive'){
+ if(p.format==='jsonp'&&['safirUmrahReceive','safirSiteOffersReceive'].includes(p.callback)){
   const payload=publicOffersPayload_();
-  return ContentService.createTextOutput('safirUmrahReceive('+JSON.stringify(payload)+');')
+  if(p.callback==='safirUmrahReceive')payload.offers=payload.offers.filter(x=>x.category==='umrah');
+  return ContentService.createTextOutput(p.callback+'('+JSON.stringify(payload)+');')
    .setMimeType(ContentService.MimeType.JAVASCRIPT);
  }
 
  const sh=SpreadsheetApp.openById(SAFIR_PUBLIC_SHEET_ID).getSheetByName('عروض العمرة');
  if(!sh)throw Error('تبويب العروض غير موجود');
- const last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,12).getValues():[];
- const offers=rows.filter(r=>String(r[7]).trim()==='منشور').reverse();
+ const last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,14).getValues():[];
+ const offers=rows.filter(r=>String(r[7]).trim()==='منشور'&&(!r[12]||String(r[12]).trim()==='umrah')).sort((a,b)=>String(b[13]||b[8]).localeCompare(String(a[13]||a[8])));
  let list=offers.map(function(r){
   const title=text_(r[1],120),price=Number(r[2])||0,departure=date_(r[3]),duration=Number(r[4])||0;
   const hotel=text_(r[5],150),description=text_(r[6],1200),image=url_(r[9]);
