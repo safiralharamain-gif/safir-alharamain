@@ -1668,3 +1668,8 @@ table > * td:first-child {
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
+
+/* Safir dynamic offers: keep empty category sections hidden, posters uncropped */
+.safir-category-offers[hidden]{display:none!important}
+.safir-category-offers .row[data-safir-grid]{max-width:1100px}
+.safir-category-offers .row[data-safir-grid] > .col > img{max-width:100%;height:auto;object-fit:contain}
