@@ -31,11 +31,14 @@ function render(data){
  if(!anchor)return;
  const insert=(node)=>anchor.parentNode.insertBefore(node,anchor);
 
- const programs=(data.umrahPrograms||[]).filter(x=>x.visible!==false);
- insert(section('برامج العمرة', '<div class="safir-preview-grid">'+(programs.length?programs.map(cardProgram).join(''):'<div class="safir-preview-empty">لا توجد برامج عمرة منشورة حاليًا.</div>')+'</div>',false,'البرامج التي تضيفها من لوحة المدير تظهر هنا بعد النشر.'));
-
- const offers=(data.offers||[]).filter(x=>x.visible!==false);
- if(offers.length) insert(section('عروض العمرة','<div class="safir-preview-grid">'+offers.map(x=>'<article class="safir-preview-card text-start">'+picture(x.image,x.title||'عرض عمرة')+'<div class="body"><span class="safir-preview-badge">'+e(x.badge||'عرض')+'</span><h3>'+e(x.title||'عرض')+'</h3>'+(x.price?'<div class="safir-preview-meta"><span>'+e(x.price)+'</span></div>':'')+(x.details?'<p>'+e(x.details)+'</p>':'')+(x.endDate?'<p class="text-gray">حتى: '+e(x.endDate)+'</p>':'')+'</div></article>').join('')+'</div>',true));
+ // Umrah offers are managed exclusively in the owner Google Sheet.
+ // Do not display legacy GitHub preview programs/offers as if they were live.
+ insert(section('برامج العمرة',
+   '<div class="safir-preview-empty">'+
+   '<p>اعرف أحدث برامج العمرة المنشورة وأسعارها وفنادقها من صفحة البرامج المتصلة مباشرة بلوحة التحكم.</p>'+
+   '<a href="umrah-programs.html" class="btn btn-secondary rounded-5 px-4">عرض برامج العمرة الحالية</a>'+
+   '</div>',
+   false,'الصفحة تعرض العروض التي تختار لها الإدارة حالة «منشور» فقط.'));
 
  const gifts=(data.gifts||[]).filter(x=>x.visible!==false);
  if(gifts.length) insert(section('هدايا وجوائز العمرة','<div class="safir-preview-grid">'+gifts.map(x=>'<article class="safir-preview-card text-start">'+picture(x.image,x.title||'هدية')+'<div class="body"><span class="safir-preview-badge">'+e(x.status||'مسابقة')+'</span><h3>'+e(x.title||'هدية')+'</h3>'+(x.prize?'<h4 class="text-secondary">'+e(x.prize)+'</h4>':'')+(x.conditions?'<p>'+e(x.conditions)+'</p>':'')+(x.winner?'<p><b>الفائز:</b> '+e(x.winner)+'</p>':'')+'</div></article>').join('')+'</div>',false));
