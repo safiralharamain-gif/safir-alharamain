@@ -24,3 +24,16 @@
 .safir-preview-card .cover img{width:100%;height:100%;max-height:340px;object-fit:contain;object-position:center;display:block}
 .safir-preview-card .cover:has(img){background:#faf8f3}
 @media(max-width:700px){.safir-preview-card .cover{height:auto;min-height:160px;aspect-ratio:4/3}}
+
+
+/* Confirmed Google Sheets offer snapshot: clear responsive card and no image cropping */
+.safir-sheets-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;padding:10px}
+.safir-sheets-card{min-width:0;background:#fff;border-radius:17px;overflow:hidden;border:1px solid #e1dfd8;text-align:right;box-shadow:0 7px 25px #24452a12}
+.safir-sheets-photo{height:290px;width:100%;display:flex;align-items:center;justify-content:center;background:#f7f6f1}
+.safir-sheets-photo img{max-width:100%;height:100%;width:100%;object-fit:contain;object-position:center}
+.safir-photo-unavailable{font-size:13px;color:#947334;text-align:center;padding:30px}
+.safir-sheets-body{padding:19px}.safir-sheets-body h3{font-size:21px;margin:0 0 10px}
+.safir-sheets-price{font-size:23px;color:#136044;font-weight:bold}
+.safir-sheets-meta{font-size:14px;color:#58685c;line-height:1.9}
+.safir-offers-note{margin:13px 0 0;color:#867657;font-size:12px;text-align:center;line-height:1.6}
+@media(max-width:700px){.safir-sheets-photo{height:250px}.safir-sheets-grid{grid-template-columns:1fr}}
