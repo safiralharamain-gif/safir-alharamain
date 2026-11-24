@@ -1,0 +1,16 @@
+{
+  "syncedAt": "2026-11-24",
+  "source": "published Google Sheets offers snapshot; not live until public Apps Script deployment is updated",
+  "offers": [
+    {
+      "id": "7e6ca609-55ac-4998-895e-3e0f1b763667",
+      "title": "عمرة تجريبية",
+      "price": 31000,
+      "departure_date": "2026-12-10",
+      "duration_days": 15,
+      "hotel": "برج الخير",
+      "description": "جربة حفظ أول عرض",
+      "image_url": "https://drive.google.com/thumbnail?id=1OxOfB9YTY1B6MlWjBxK-d9ImHXj4uWCa&sz=w1600"
+    }
+  ]
+}
