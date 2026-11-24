@@ -132,6 +132,18 @@ main{padding:23px 30px 35px;min-width:0;max-width:1400px;width:100%;margin:0 aut
      <div class="field"><label>عنوان العرض *</label><input id="f-title" placeholder="مثال: عمرة رجب أو عرض فندق أو رحلة داخلية" maxlength="120"></div>
      <div class="grid2">
       <div class="field"><label>السعر بالجنيه المصري *</label><input id="f-price" type="number" min="0" step="1" placeholder="31000"></div>
+      <div class="field"><label for="f-level">المستوى</label><input id="f-level" maxlength="180"></div>
+      <div class="field"><label for="f-durationLabel">مدة الرحلة بالتفصيل</label><input id="f-durationLabel" maxlength="180"></div>
+      <div class="field"><label for="f-itinerary">مسار الرحلة</label><input id="f-itinerary" maxlength="180"></div>
+      <div class="field"><label for="f-airline">شركة الطيران</label><input id="f-airline" maxlength="180"></div>
+      <div class="field"><label for="f-fivePrice">سعر الخماسي بالجنيه المصري</label><input id="f-fivePrice" maxlength="30" inputmode="decimal"></div>
+      <div class="field"><label for="f-quadruplePrice">سعر الرباعي بالجنيه المصري</label><input id="f-quadruplePrice" maxlength="30" inputmode="decimal"></div>
+      <div class="field"><label for="f-triplePrice">سعر الثلاثي بالجنيه المصري</label><input id="f-triplePrice" maxlength="30" inputmode="decimal"></div>
+      <div class="field"><label for="f-binaryPrice">سعر الثنائي بالجنيه المصري</label><input id="f-binaryPrice" maxlength="30" inputmode="decimal"></div>
+      <div class="field"><label for="f-childPrice">سعر الطفل بالجنيه المصري</label><input id="f-childPrice" maxlength="30" inputmode="decimal"></div>
+      <div class="field"><label for="f-infantPrice">سعر الرضيع بالجنيه المصري</label><input id="f-infantPrice" maxlength="30" inputmode="decimal"></div>
+      <div class="field"><label for="f-agency">شركة السياحة</label><input id="f-agency" maxlength="180"></div>
+      <div class="field"><label for="f-notes">ملاحظات وشروط العرض</label><textarea id="f-notes" rows="4" maxlength="1800" placeholder="شروط الطفل والرضيع، كل ملاحظة في سطر"></textarea></div>
       <div class="field"><label>مدة الرحلة بالأيام</label><input id="f-duration" type="number" min="0" max="365" placeholder="15"></div>
       <div class="field"><label>تاريخ السفر</label><input id="f-departure" type="date"></div>
       <div class="field"><label>تاريخ العودة</label><input id="f-return" type="date"></div>
@@ -225,9 +237,11 @@ async function refresh(){
  finally{el('refresh').disabled=false}
 }
 function emptyOffer(){return {id:'',category:'umrah',title:'',price:'',departure_date:'',duration_days:'',hotel:'',description:'',status:'مسودة',image_url:'',gallery:[],extras:{}}}
+const detailFields=["level","durationLabel","itinerary","airline","fivePrice","quadruplePrice","triplePrice","binaryPrice","childPrice","infantPrice","agency","notes"];
 function fillEditor(){
  var x=state.editing,z=x.extras||{};
  var map={'f-category':x.category||'umrah','f-title':x.title,'f-price':x.price,'f-duration':x.duration_days,'f-departure':x.departure_date,'f-return':z.returnDate,'f-hotel':x.hotel,'f-madinah':z.madinahHotel,'f-transport':z.transport,'f-badge':z.badge,'f-description':x.description,'f-includes':z.includes,'f-excludes':z.excludes,'f-status':x.status};
+ detailFields.forEach(function(key){map['f-'+key]=z[key]});
  Object.keys(map).forEach(function(id){el(id).value=map[id]==null?'':map[id]});
  renderGallery();preview();show('editor');
 }
@@ -242,6 +256,7 @@ function readEditor(){
  x.duration_days=el('f-duration').value;x.departure_date=el('f-departure').value;
  x.hotel=el('f-hotel').value.trim();x.description=el('f-description').value.trim();x.status=el('f-status').value;
  x.extras={returnDate:el('f-return').value,madinahHotel:el('f-madinah').value.trim(),transport:el('f-transport').value.trim(),badge:el('f-badge').value.trim(),includes:el('f-includes').value.trim(),excludes:el('f-excludes').value.trim()};
+ detailFields.forEach(function(key){x.extras[key]=el('f-'+key).value.trim()});
  return x;
 }
 function preview(){

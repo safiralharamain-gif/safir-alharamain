@@ -18,7 +18,7 @@
    poster.className='rounded-4 shadow';
    poster.alt=offer.title||'صورة عرض سفير الحرمين';
    poster.loading='lazy';
-   poster.style.cssText='display:block;width:100%;height:auto;max-height:760px;object-fit:contain';
+   poster.style.cssText='display:block;width:100%;aspect-ratio:4/5;object-fit:contain;background:#f8f5ee';
    poster.src=validImage(offer.image_url)||'./img/umrah-trips.png';
    poster.onerror=function(){
      if(poster.dataset.backup)return;

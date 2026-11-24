@@ -25,8 +25,8 @@
     img.loading = 'lazy';
     img.decoding = 'async';
     img.style.width = '100%';
-    img.style.height = 'auto';
-    img.style.maxHeight = '680px';
+    img.style.aspectRatio = '4 / 5';
+    img.style.background = '#f8f5ee';
     img.style.objectFit = 'contain';
     img.style.display = 'block';
     if (isGoogle) {

@@ -32,6 +32,18 @@ function publicOffersPayload_(){
     created_at:text_(r[13]||r[8],60),_row:row,
     image_url:url_(r[9]),gallery,
     extras:{
+     level:text_(ex.level,180),
+     durationLabel:text_(ex.durationLabel,180),
+     itinerary:text_(ex.itinerary,180),
+     airline:text_(ex.airline,180),
+     fivePrice:text_(ex.fivePrice,30),
+     quadruplePrice:text_(ex.quadruplePrice,30),
+     triplePrice:text_(ex.triplePrice,30),
+     binaryPrice:text_(ex.binaryPrice,30),
+     childPrice:text_(ex.childPrice,30),
+     infantPrice:text_(ex.infantPrice,30),
+     agency:text_(ex.agency,180),
+     notes:text_(ex.notes,1800),
      madinahHotel:text_(ex.madinahHotel,150),returnDate:text_(ex.returnDate,30),
      transport:text_(ex.transport,150),includes:text_(ex.includes,900),
      excludes:text_(ex.excludes,900),badge:text_(ex.badge,60)

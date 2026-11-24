@@ -128,6 +128,18 @@ function saveOffer(data){
  const gallery=cleanGallery_(data.gallery);
  const image=imageUrl_(data.image_url);
  const extras={
+  level:str_(data.extras&&data.extras.level,180),
+  durationLabel:str_(data.extras&&data.extras.durationLabel,180),
+  itinerary:str_(data.extras&&data.extras.itinerary,180),
+  airline:str_(data.extras&&data.extras.airline,180),
+  fivePrice:str_(data.extras&&data.extras.fivePrice,30),
+  quadruplePrice:str_(data.extras&&data.extras.quadruplePrice,30),
+  triplePrice:str_(data.extras&&data.extras.triplePrice,30),
+  binaryPrice:str_(data.extras&&data.extras.binaryPrice,30),
+  childPrice:str_(data.extras&&data.extras.childPrice,30),
+  infantPrice:str_(data.extras&&data.extras.infantPrice,30),
+  agency:str_(data.extras&&data.extras.agency,180),
+  notes:str_(data.extras&&data.extras.notes,1800),
   madinahHotel:str_(data.extras&&data.extras.madinahHotel,150),
   returnDate:str_(data.extras&&data.extras.returnDate,10),
   transport:str_(data.extras&&data.extras.transport,150),

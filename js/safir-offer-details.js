@@ -68,16 +68,38 @@
     if (o.description)root.append(node('p', 'fs-6 text-center lh-lg mt-3', o.description));
     const x = o.extras || {};
     const cost = Number(o.price);
+    const roomPrice = function (value) {
+      const amount = String(value ?? '').trim();
+      return amount ? amount + ' جنيه مصري' : '';
+    };
     const table = makeTable([
+      ['المستوى', x.level],
       [tripSection?'تاريخ الرحلة':'تاريخ العرض أو الخدمة', o.departure_date],
-      [tripSection?'مدة الرحلة':'المدة', o.duration_days ? o.duration_days + ' يوم' : ''],
+      [tripSection?'مدة الرحلة':'المدة', x.durationLabel || (o.duration_days ? o.duration_days + ' يوم' : '')],
       ['تاريخ العودة', x.returnDate],
+      ['مسار الرحلة', x.itinerary],
+      ['شركة الطيران', x.airline],
       [tripSection?'فندق مكة':'الفندق أو المكان', o.hotel],
       [tripSection?'فندق المدينة':'موقع آخر', x.madinahHotel],
       ['الطيران والانتقالات', x.transport],
+      ['سعر الخماسي', roomPrice(x.fivePrice)],
+      ['سعر الرباعي', roomPrice(x.quadruplePrice)],
+      ['سعر الثلاثي', roomPrice(x.triplePrice)],
+      ['سعر الثنائي', roomPrice(x.binaryPrice)],
+      ['سعر الطفل', roomPrice(x.childPrice)],
+      ['سعر الرضيع', roomPrice(x.infantPrice)],
+      ['شركة السياحة', x.agency],
       ['سعر العرض', Number.isFinite(cost) && cost > 0 ? cost.toLocaleString('ar-EG') + ' جنيه مصري' : 'يُحدد عند الاستفسار']
     ]);
     root.append(table);
+    if (x.notes) {
+      const notes = node('div', 'trip-notes mb-4 mx-auto');
+      notes.style.maxWidth = '900px';
+      notes.append(sectionHeader('ملاحظات وشروط العرض:'));
+      String(x.notes).split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+        .forEach(line => notes.append(node('p', 'lh-lg mb-2', line)));
+      root.append(notes);
+    }
     if (x.includes) {
       const inc=node('div','program-includes mt-5 mb-3 mx-auto px-2');inc.style.maxWidth='900px';
       inc.append(sectionHeader('البرنامج يشمل:'));
