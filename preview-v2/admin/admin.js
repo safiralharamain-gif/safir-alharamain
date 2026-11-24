@@ -57,11 +57,11 @@ function renderList(type){
  bindEditors();
 }
 function bindEditors(){
- $('.editor input,.editor textarea,.editor select').forEach(el=>{
+ $$('.editor input,.editor textarea,.editor select').forEach(el=>{
    el.oninput=()=>{if(el.dataset.imageUrl)updateImagePreview(el);saveDraft()};
    el.onchange=()=>{if(el.dataset.imageUrl)updateImagePreview(el);saveDraft()};
  });
- $('[data-image-url]').forEach(updateImagePreview);
+ $$('[data-image-url]').forEach(updateImagePreview);
  $$('[data-delete]').forEach(btn=>btn.onclick=()=>{const e=btn.closest('.editor'),type=e.dataset.type,i=+e.dataset.index;if(confirm('حذف العنصر؟')){data[type].splice(i,1);renderList(type);saveDraft()}});
  $$('[data-toggle]').forEach(btn=>btn.onclick=()=>{const e=btn.closest('.editor'),type=e.dataset.type,i=+e.dataset.index;data[type][i].visible=data[type][i].visible===false?true:false;renderList(type);saveDraft()});
 }
