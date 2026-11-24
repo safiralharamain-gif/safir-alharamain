@@ -386,7 +386,17 @@
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     </script>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
-  <script src="./js/detailsPage.js" defer></script>
+  <!-- Keep original Firestore details unchanged; use same page for new Sheets offers. -->
+  <script>
+    (function () {
+      const script = document.createElement('script');
+      script.src = new URLSearchParams(location.search).has('offer')
+        ? './js/safir-offer-details.js?v=4'
+        : './js/detailsPage.js';
+      script.async = false;
+      document.head.appendChild(script);
+    })();
+  </script>
   <script src="./js/details-swiper.js" defer></script>
   <script src="./js/open-close-nav.js" defer></script>
   <script src="./js/loading-page.js" defer></script>
