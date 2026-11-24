@@ -200,7 +200,6 @@ function render(){
  el('homeBookings').innerHTML=state.bookings.slice(0,3).map(function(x,i){return bookingCard(x,i)}).join('')||'<div class="empty">لا توجد حجوزات بعد.</div>';
 }
 async function refresh(){
- if(state.busy)return;
  el('refresh').disabled=true;
  try{var r=await call('getDashboardData');state.offers=r.offers||[];state.bookings=r.bookings||[];state.totals=r.totals||{};render()}
  catch(e){toast('فشل تحميل البيانات: '+(e.message||e),true)}
@@ -327,7 +326,7 @@ document.addEventListener('change',async function(e){
 el('refresh').onclick=refresh;el('createOffer').onclick=newOffer;el('backOffers').onclick=function(){show('offers')};
 el('saveOffer').onclick=function(){save(false)};el('saveDraft').onclick=function(){save(true)};
 el('offerSearch').oninput=render;el('offerFilter').onchange=render;el('bookingSearch').oninput=render;
-el('dropzone').onclick=function(){el('files').click()};
+el('dropzone').onclick=function(e){if(e.target===el('files'))return;el('files').click()};
 el('dropzone').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();el('files').click()}};
 el('files').onchange=function(e){uploadFiles(e.target.files)};
 el('dropzone').ondragover=function(e){e.preventDefault();el('dropzone').classList.add('drag')};
