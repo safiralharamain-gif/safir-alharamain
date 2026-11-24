@@ -1,0 +1,25 @@
+{
+  "updatedAt": "2026-11-24T21:00:40.090Z",
+  "source": "Verified published-offers snapshot from private Google Sheets; live data updates after public Apps Script endpoint deployment",
+  "offers": [
+    {
+      "id": "7e6ca609-55ac-4998-895e-3e0f1b763667",
+      "title": "عمرة تجريبية",
+      "price": 31000,
+      "departure_date": "2026-12-10",
+      "duration_days": 15,
+      "hotel": "برج الخير",
+      "description": "جربة حفظ أول عرض",
+      "status": "منشور",
+      "image_url": "https://drive.google.com/thumbnail?id=1OxOfB9YTY1B6MlWjBxK-d9ImHXj4uWCa&sz=w1600",
+      "gallery": [
+        {
+          "url": "https://drive.google.com/thumbnail?id=1OxOfB9YTY1B6MlWjBxK-d9ImHXj4uWCa&sz=w1600",
+          "width": 1122,
+          "height": 1402
+        }
+      ],
+      "extras": {}
+    }
+  ]
+}
