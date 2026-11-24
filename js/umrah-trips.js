@@ -35,8 +35,15 @@
       img.src = './img/umrah-imgs/' + encodeURIComponent(String(src || '').replace(/^.*[\\/]/, ''));
     }
     img.onerror = function () {
-      if (!img.dataset.fallback) {
-        img.dataset.fallback = 'true';
+      if (!img.dataset.fallback && !isGoogle) {
+        // The copied GitHub repo may be missing some legacy posters still on the original site.
+        img.dataset.fallback = 'original-domain';
+        img.src = 'https://safiralharamain.com/img/umrah-imgs/' +
+          encodeURIComponent(String(src || '').replace(/^.*[\\/]/, ''));
+        return;
+      }
+      if (img.dataset.fallback !== 'generic') {
+        img.dataset.fallback = 'generic';
         img.src = './img/umrah-trips.png';
       }
     };
