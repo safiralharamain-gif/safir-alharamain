@@ -139,24 +139,29 @@
 
     const bookingSection=node('section','section bg-secondary');
     const center=node('div','container');
-    const box=node('div','booking-form bg-white rounded-5 shadow p-5 mx-auto');
+    const box=node('div','booking-form bg-white rounded-5 shadow p-3 p-md-5 mx-auto');
     box.style.maxWidth='900px';
     box.append(node('h3','booking-title fs-1 text-center text-secondary mx-auto mt-2 mb-5',
        o.category==='umrah'?'حجـز رحلـة عمـرة':'تفاصيل الحجز والاستفسار'));
     if(o.category==='umrah'){
       box.append(node('p','text-regular text-center text-gray lh-lg',
-        'اكتب بياناتك في نموذج الحجز الخاص بسفير الحرمين. الطلب يحتاج تأكيدًا من فريق العمل.'));
+        'ابعت طلبك على واتساب. فريق سفير الحرمين هيتواصل معاك لتأكيد الحجز.'));
+      const accountForm=node('details','mt-4');
+      accountForm.append(node('summary','text-bold','نموذج الحجز لحساب سفير الحرمين'));
       const iframe=node('iframe');
       const params=new URLSearchParams({tripName:o.title||'',service:'عمرة',date:o.departure_date||''});
       iframe.src=URL_BOOKING+'?'+params.toString();
       iframe.title='نموذج حجز '+(o.title||'العمرة');
       iframe.loading='lazy';
       iframe.style.cssText='display:block;border:0;width:100%;height:1420px;border-radius:12px;background:#faf8f3';
-      box.append(iframe);
+      accountForm.addEventListener('toggle',function(){
+        if(accountForm.open&&!iframe.isConnected)accountForm.append(iframe);
+      });
+      box.append(accountForm);
       const fallback=node('p','text-center mt-3');
       const a=node('a','btn btn-secondary rounded-4 px-4 py-3','فتح استمارة الحجز في صفحة مستقلة');
       a.href=iframe.src;a.target='_blank';a.rel='noopener noreferrer';
-      fallback.append(a);box.append(fallback);
+      fallback.append(a);accountForm.append(fallback);
     }else{
       box.append(node('p','text-regular text-center text-gray lh-lg',
         'للحجز أو الاستفسار عن هذا العرض، تواصل مع فريق سفير الحرمين أو افتح صفحة الخدمة.'));
@@ -165,13 +170,11 @@
       a.href=category.page;go.append(a);box.append(go);
     }
     const wa=node('p','text-center mt-3');
-    const contact=node('a','text-secondary text-bold','الاستفسار عبر واتساب');
-    contact.href='https://wa.me/201150337383?text='+encodeURIComponent('السلام عليكم، أريد تفاصيل برنامج: '+(o.title||'عمرة'));
-    contact.target='_blank';contact.rel='noopener noreferrer';wa.append(contact);box.append(wa);
-    if(o.category==='umrah'){
-      box.append(node('p','text-regular text-gray text-center mt-3',
-        'نموذج الحجز قد يتطلب تسجيل الدخول حتى يتم تفعيل وصول العملاء بصورة آمنة.'));
-    }
+    const contact=node('a','btn btn-secondary rounded-4 px-4 py-3',o.category==='umrah'?'اطلب الحجز على واتساب':'الاستفسار عبر واتساب');
+    contact.href='https://wa.me/201150337383?text='+encodeURIComponent((o.category==='umrah'?'السلام عليكم، أريد حجز برنامج: ':'السلام عليكم، أريد تفاصيل برنامج: ')+(o.title||category.name)+(o.departure_date?'\nتاريخ الرحلة: '+o.departure_date:''));
+    contact.target='_blank';contact.rel='noopener noreferrer';wa.append(contact);
+    if(o.category==='umrah')box.insertBefore(wa,box.querySelector('details'));
+    else box.append(wa);
     center.append(box);bookingSection.append(center);container.append(bookingSection);
   }
 
